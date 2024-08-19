@@ -1,10 +1,12 @@
 import sys
-import random
+import time
+from timeloop import Timeloop
+from datetime import timedelta
 from PySide6.QtCore import SIGNAL
 from PySide6 import QtCore, QtWidgets, QtGui# -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette, QColor, QPixmap
 from tomo import TOMO1S12V2I
-
+from pickle import NONE
 
 
 class MyWidget(QtWidgets.QWidget):
@@ -19,6 +21,8 @@ class MyWidget(QtWidgets.QWidget):
         palette.setColor(QPalette.WindowText,QtGui.QColor(0, 0, 0))
         app.setPalette(palette)
         
+        
+        
         self.createVoltMeterGroupBox()
         self.createZoneActiveGroupBox()
         self.createCurrentSourceGroupBox()
@@ -29,6 +33,11 @@ class MyWidget(QtWidgets.QWidget):
         pixmap =QtGui.QPixmap('logo.png')
         self.lbllogo = QtWidgets.QLabel() 
         self.lbllogo.setPixmap(pixmap)
+        
+        self.tl = Timeloop() 
+        @self.tl.job(interval=timedelta(seconds=2))
+        def sample_job_every_2s(self):
+            self.setPeriodicMeasure() 
         
         mainLayout = QtWidgets.QGridLayout()
         mainLayout.addWidget(self.currentSourceGroupBox,0, 0)
@@ -46,24 +55,43 @@ class MyWidget(QtWidgets.QWidget):
         self.setLayout(mainLayout)
         
         self.connect(self.btnConnect, SIGNAL("clicked()"),self.initDut)
-        self.connect(self.btnParam, SIGNAL("clicked()"),self.setParam)
         self.connect(self.btnMeas, SIGNAL("clicked()"),self.displayMeas)
+        self.connect(self.btnSetSuParam, SIGNAL("clicked()"),self.setSeqU)
+        self.connect(self.btnGetSuParam, SIGNAL("clicked()"),self.getSeqU)
+        self.connect(self.btnSetival, SIGNAL("clicked()"),self.setIvalSource)
+        self.connect(self.btnSetCh, SIGNAL("clicked()"),self.setChannelSource)
+        self.connect(self.btnSetZa, SIGNAL("clicked()"),self.setZA)
+        
+     
+      
+        
     
     def initDut(self):   
         self.dut = TOMO1S12V2I(comPort=self.inputboxCom.text())
         self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
         self.getParam()
         self.displayMeas()
-        
+    
+    def setPeriodicMeasure(self):
+        a = self.checkboxEperiodMeas.checkState()
+        if self.checkboxEperiodMeas.checkState() != False:
+            self.displayMeas()           
+            
+    def setEnSeqU(self):
+        if self.checkboxEnSeqU.checkState() == True:
+            self.dut.su_setMainTask(1)
+        else:
+            self.dut.su_setMainTask(0)
+                        
     def setParam(self): 
         self.setSeqU() 
         self.setZA()
-        self.setCurretSource()
+        self.setCurrentSource()
         
     def getParam(self):
         self.getSeqU()
         self.getZA()
-        self.getCurretSource()
+        self.getCurrentSource()
         
     def setSeqU(self):
         self.dut.setSeqU(I01=self.inputboxSuI01.text(), I02=self.inputboxSuI02.text(), 
@@ -82,13 +110,12 @@ class MyWidget(QtWidgets.QWidget):
         self.inputboxSuTuE.setText(str(self.dut.SeqU["TuE"]))
         self.inputboxSuTuMs.setText(str(self.dut.SeqU["TempoMs"]))
         
-    def setCurretSource(self):
+    def setCurrentSource(self):
         self.setIvalSource()
         self.setChannelSource()
-        self.setIonSource()
+        self.setIonSource()        
         
-        
-    def getCurretSource(self):
+    def getCurrentSource(self):
         self.getIvalSource()
         self.getChannelSource()
         self.getIonSource()
@@ -98,8 +125,7 @@ class MyWidget(QtWidgets.QWidget):
             sON= 0
         else :
             sON= 1 
-        self.dut.setIon(En=sON)
-        
+        self.dut.setIon(En=sON)       
         
     def getIonSource(self):
         if self.dut.getIon() == 0 :
@@ -108,7 +134,6 @@ class MyWidget(QtWidgets.QWidget):
             self.checkboxIon.setChecked(True)
          
     def setIvalSource(self):
-        
         Ival = int(self.inputboxIval.text())
         if Ival < 0:
             Ival = Ival * -1
@@ -116,6 +141,7 @@ class MyWidget(QtWidgets.QWidget):
         else:
             self.dut.setIpol(Pol=1)        
         self.dut.setIsource(IuA=Ival)
+        self.displayMeas()
            
     def getIvalSource(self):
         Ival = self.dut.getIsource()
@@ -124,10 +150,11 @@ class MyWidget(QtWidgets.QWidget):
         self.inputboxIval.setText(str(Ival))
         
     def setChannelSource(self):
-        self.dut.setIchannel(self.inputboxIchanel.text())
+        self.dut.setSourceChannel(self.inputboxIchanel.text())
+        self.displayMeas()
         
     def getChannelSource(self):
-        self.inputboxIchanel.setText(str(self.dut.getIchannel()))
+        self.inputboxIchanel.setText(str(self.dut.getSourceChannel()))
            
     
     def setZA(self): 
@@ -139,7 +166,8 @@ class MyWidget(QtWidgets.QWidget):
             sA2= 0
         else :
             sA2= 1 
-        self.dut.setActiveZone(A1=sA1, A2=sA2)     
+        self.dut.setActiveZone(A1=sA1, A2=sA2) 
+        self.displayMeas()   
             
             
     def getZA(self):    
@@ -227,22 +255,19 @@ class MyWidget(QtWidgets.QWidget):
         mainLayout.addWidget(self.inputboxCom,0, 1)
         
         # Init Comport
-        self.btnConnect = QtWidgets.QPushButton("CONNECT")
+        self.btnConnect = QtWidgets.QPushButton("INIT")
         self.btnConnect.setDefault(True)
         mainLayout.addWidget(self.btnConnect,1, 1)
         
           # Refresh listcom
-        self.btnComList = QtWidgets.QPushButton("COM LIST")
+        self.btnComList = QtWidgets.QPushButton("List PORT COM")
         self.btnComList.setDefault(True)
         mainLayout.addWidget(self.btnComList,1, 0)
         
-        self.btnMeas = QtWidgets.QPushButton("MEASURE")
+        self.btnMeas = QtWidgets.QPushButton("Get MEASURE")
         self.btnMeas.setDefault(True)
-        mainLayout.addWidget(self.btnMeas,2, 0)
+        mainLayout.addWidget(self.btnMeas,2, 1)
         
-        self.btnParam = QtWidgets.QPushButton("PARAMETER")
-        self.btnParam.setDefault(True)
-        mainLayout.addWidget(self.btnParam,2, 1)
         
         lblTask = QtWidgets.QLabel()
         mainLayout.addWidget(lblTask,3, 0)
@@ -250,20 +275,14 @@ class MyWidget(QtWidgets.QWidget):
         
         # Periodic Measure
         self.checkboxEperiodMeas = QtWidgets.QCheckBox("Periodic Measure task")
-        self.checkboxEperiodMeas.setChecked(True) 
+        self.checkboxEperiodMeas.setChecked(False) 
+        self.checkboxEperiodMeas.toggled.connect(self.setPeriodicMeasure)
         mainLayout.addWidget(self.checkboxEperiodMeas,4, 0)
          # Seq Unitai Measure
         self.checkboxEnSeqU = QtWidgets.QCheckBox("Sequence Unitaire task")
-        self.checkboxEnSeqU.setChecked(True) 
+        self.checkboxEnSeqU.setChecked(False) 
+        self.checkboxEnSeqU.toggled.connect(self.setEnSeqU)
         mainLayout.addWidget(self.checkboxEnSeqU,5, 0)
-         # Start Task 
-        self.btnStartTask = QtWidgets.QPushButton("START")
-        self.btnStartTask.setDefault(True)
-        mainLayout.addWidget(self.btnStartTask,4, 1)
-        
-        self.btnStopTask = QtWidgets.QPushButton("STOP")
-        self.btnStopTask.setDefault(True)
-        mainLayout.addWidget(self.btnStopTask,5, 1)
         
         
         mainLayout.setRowStretch(1, 1)
@@ -285,7 +304,7 @@ class MyWidget(QtWidgets.QWidget):
         
         # SuI01
         self.inputboxSuI01 = QtWidgets.QLineEdit()
-        self.inputboxSuI01.setText("50")  
+        self.inputboxSuI01.setText("")  
         
         self.lblSuI01 = QtWidgets.QLabel() 
         self.lblSuI01.setText("IO1 (uA)")     
@@ -298,7 +317,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuI02
         self.inputboxSuI02 = QtWidgets.QLineEdit()
-        self.inputboxSuI02.setText("100")  
+        self.inputboxSuI02.setText("")  
         
         self.lblSuI02 = QtWidgets.QLabel() 
         self.lblSuI02.setText("IO2 (uA)")     
@@ -311,7 +330,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuTuA
         self.inputboxSuTuA = QtWidgets.QLineEdit()
-        self.inputboxSuTuA.setText("10")  
+        self.inputboxSuTuA.setText("")  
         
         self.lblSuTuA = QtWidgets.QLabel() 
         self.lblSuTuA.setText("TuA (s)")     
@@ -324,7 +343,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuTuB
         self.inputboxSuTuB = QtWidgets.QLineEdit()
-        self.inputboxSuTuB.setText("120")  
+        self.inputboxSuTuB.setText("")  
         
         self.lblSuTuB = QtWidgets.QLabel() 
         self.lblSuTuB.setText("TuB (s)")     
@@ -337,7 +356,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuTuC
         self.inputboxSuTuC = QtWidgets.QLineEdit()
-        self.inputboxSuTuC.setText("30")  
+        self.inputboxSuTuC.setText("")  
         
         self.lblSuTuC = QtWidgets.QLabel() 
         self.lblSuTuC.setText("TuC (s)")     
@@ -350,7 +369,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuTuD
         self.inputboxSuTuD = QtWidgets.QLineEdit()
-        self.inputboxSuTuD.setText("120")  
+        self.inputboxSuTuD.setText("")  
         
         self.lblSuTuD = QtWidgets.QLabel() 
         self.lblSuTuD.setText("TuD (s)")     
@@ -363,7 +382,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuTuE
         self.inputboxSuTuE = QtWidgets.QLineEdit()
-        self.inputboxSuTuE.setText("10")  
+        self.inputboxSuTuE.setText("")  
         
         self.lblSuTuE = QtWidgets.QLabel() 
         self.lblSuTuE.setText("TuE (s)")     
@@ -376,7 +395,7 @@ class MyWidget(QtWidgets.QWidget):
         
          # SuTuMs
         self.inputboxSuTuMs = QtWidgets.QLineEdit()
-        self.inputboxSuTuMs.setText("50")  
+        self.inputboxSuTuMs.setText("")  
         
         self.lblSuTuMs = QtWidgets.QLabel() 
         self.lblSuTuMs.setText("TuMs (ms)")     
@@ -387,6 +406,15 @@ class MyWidget(QtWidgets.QWidget):
         mainLayout.addWidget(self.lblSuTuMs,7, 0)
         mainLayout.addWidget(self.inputboxSuTuMs,7, 1)
         
+        # Set Param button 
+        self.btnSetSuParam= QtWidgets.QPushButton("Set")
+        self.btnSetSuParam.setDefault(True)
+        mainLayout.addWidget(self.btnSetSuParam,8, 1)
+        
+        # Set Param button 
+        self.btnGetSuParam= QtWidgets.QPushButton("Get")
+        self.btnGetSuParam.setDefault(True)
+        mainLayout.addWidget(self.btnGetSuParam,8, 0)
         
         mainLayout.setRowStretch(1, 1)
         mainLayout.setRowStretch(2, 1)
@@ -408,6 +436,7 @@ class MyWidget(QtWidgets.QWidget):
         # ION
         self.checkboxIon = QtWidgets.QCheckBox()
         self.checkboxIon.setChecked(True)  
+        self.checkboxIon.toggled.connect(self.setIonSource)
         
         self.lblIon = QtWidgets.QLabel() 
         self.lblIon.setText("Source ON/OFF")     
@@ -420,7 +449,7 @@ class MyWidget(QtWidgets.QWidget):
         
         # Source current
         self.inputboxIval = QtWidgets.QLineEdit()
-        self.inputboxIval.setText("100")  
+        self.inputboxIval.setText("0")  
         
         self.lblIval = QtWidgets.QLabel() 
         self.lblIval.setText("Current (uA)")     
@@ -428,18 +457,29 @@ class MyWidget(QtWidgets.QWidget):
         palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblIval.setPalette(palette)
         
+        # Set Param button 
+        self.btnSetival = QtWidgets.QPushButton("Set I")
+        self.btnSetival.setDefault(True)
+        
+        mainLayout.addWidget(self.btnSetival,1, 2)        
         mainLayout.addWidget(self.lblIval,1, 0)
         mainLayout.addWidget(self.inputboxIval,1, 1)
         
         # Source channel
         self.inputboxIchanel = QtWidgets.QLineEdit()
-        self.inputboxIchanel.setText("1")  
+        self.inputboxIchanel.setText("0")  
         
         self.lblIchanel = QtWidgets.QLabel() 
         self.lblIchanel.setText("Source Channel")     
         palette = self.lblIchanel.palette()
         palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblIchanel.setPalette(palette)
+        
+        # Set Param button 
+        self.btnSetCh = QtWidgets.QPushButton("Set Channel")
+        self.btnSetCh.setDefault(True)
+        
+        mainLayout.addWidget(self.btnSetCh,2, 2)
         
         mainLayout.addWidget(self.lblIchanel,2, 0)
         mainLayout.addWidget(self.inputboxIchanel,2, 1)
@@ -542,6 +582,10 @@ class MyWidget(QtWidgets.QWidget):
  
         self.imZa1.display(0)
         self.imZa2.display(0)
+        
+        # Set Param button 
+        self.btnSetZa = QtWidgets.QPushButton("Set ZA")
+        self.btnSetZa.setDefault(True)
 
         mainLayout = QtWidgets.QGridLayout()        
         mainLayout.addWidget(self.lblza1,0, 0)
@@ -552,6 +596,7 @@ class MyWidget(QtWidgets.QWidget):
         
         mainLayout.addWidget(self.checkboxZa1,0, 2)
         mainLayout.addWidget(self.checkboxZa2,1, 2)
+        mainLayout.addWidget(self.btnSetZa,2, 0)
         
         mainLayout.setRowStretch(1, 1)
         mainLayout.setRowStretch(2, 1)

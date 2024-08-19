@@ -12,7 +12,8 @@ class TOMO1S12V2I:
 
     self.Meas = {}
     self.ZoneActive = {}
-    self.IsourceChannel= 0
+    self.IChannel= 0
+    self.Chrelay= 0
     self.Led=0
     self.suEN = 0
     self.ZoneActive["A1"]=0
@@ -174,76 +175,61 @@ class TOMO1S12V2I:
          elif val == 3:
              self.ZoneActive["A1"]=1
              self.ZoneActive["A2"]=1
+             
+  def setSourceChannel(self, channel = 0):
+    self.IChannel=channel
+    strVal = "AT+SCH=" + str(channel) +"\r\n"
+    self.wCom(data=strVal)    
 
-  def setIchannel(self, channel ="0"):
-    self.IsourceChannel = int(channel)
-    conf = '000000000000'
-    if self.IsourceChannel == 0:
-        conf = '000000000000'
-    if self.IsourceChannel == 1:
-        conf = '100000000000'
-    if self.IsourceChannel == 2:
-        conf = '010000000000'  
-    if self.IsourceChannel == 3:
-        conf = '001000000000'
-    if self.IsourceChannel == 4:
-        conf = '000100000000'
-    if self.IsourceChannel == 5:
-        conf = '000010000000'
-    if self.IsourceChannel == 6:
-        conf = '000001000000'
-    if self.IsourceChannel == 7:
-        conf = '000000100000'
-    if self.IsourceChannel == 8:
-        conf = '000000010000'
-    if self.IsourceChannel == 9:
-        conf = '000000001000'
-    if self.IsourceChannel == 10:
-        conf = '000000000100'
-    if self.IsourceChannel == 11:
-        conf = '000000000010'
-    if self.IsourceChannel == 12:
-        conf = '000000000001'
-    if self.IsourceChannel == 'ALL':
-        conf = '111111111111'
-    strVal = "AT+SCH=" + conf +"\r\n"
+  def getSourceChannel(self):
+    strVal = "AT+SCH=?\r\n" 
+    ret = self.wrCom(data=strVal)
+    if ret != 999999999:
+        self.IChannel = int(ret)         
+    return self.IChannel
+
+  def setRelay(self, channel ="0"):
+    ival = int(channel)
+    self.Chrelay = '000000000000'
+    if ival == 0:
+        self.Chrelay = '000000000000'
+    if ival == 1:
+        self.Chrelay = '100000000000'
+    if ival == 2:
+        self.Chrelay = '010000000000'  
+    if ival == 3:
+        self.Chrelay = '001000000000'
+    if ival == 4:
+        self.Chrelay = '000100000000'
+    if ival == 5:
+        self.Chrelay = '000010000000'
+    if ival == 6:
+        self.Chrelay = '000001000000'
+    if ival == 7:
+        self.Chrelay = '000000100000'
+    if ival == 8:
+        self.Chrelay = '000000010000'
+    if ival == 9:
+        self.Chrelay = '000000001000'
+    if ival == 10:
+        self.Chrelay = '000000000100'
+    if ival == 11:
+        self.Chrelay = '000000000010'
+    if ival == 12:
+        self.Chrelay = '000000000001'
+    if ival == 'ALL':
+        self.Chrelay = '111111111111'
+    strVal = "AT+REL=" + self.Chrelay +"\r\n"
     self.wCom(data=strVal)
 
-  def getIchannel(self):
-    strVal = "AT+SCH=?\r\n"
+  def getRelay(self):
+    strVal = "AT+REL=?\r\n"
     r = self.wrCom(data=strVal)
     val = r[0].split('=', 1)
     ret = val[0]
     if ret != 999999999:
-        if ret =='000000000000':
-             self.IsourceChannel = 0
-        if ret =='100000000000':
-             self.IsourceChannel = 1     
-        if ret =='010000000000':
-             self.IsourceChannel = 2
-        if ret =='001000000000':
-             self.IsourceChannel = 3
-        if ret =='000100000000':
-             self.IsourceChannel = 4
-        if ret =='000010000000':
-             self.IsourceChannel = 5
-        if ret =='000001000000':
-             self.IsourceChannel = 6
-        if ret =='000000100000':
-             self.IsourceChannel = 7
-        if ret =='000000010000':
-             self.IsourceChannel = 8
-        if ret =='000000001000':
-             self.IsourceChannel = 9
-        if ret =='000000000100':
-             self.IsourceChannel = 10
-        if ret =='000000000010':
-             self.IsourceChannel = 11
-        if ret =='000000000001':
-             self.IsourceChannel = 12  
-        if ret =='111111111111':
-             self.IsourceChannel = 'ALL'   
-        return self.IsourceChannel
+        self.Chrelay = ret   
+        return ret
          
   def setAcquire(self):
      strVal = "AT+MEAS=?\r\n"
