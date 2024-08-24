@@ -61,10 +61,8 @@ class MyWidget(QtWidgets.QWidget):
         self.connect(self.btnSetival, SIGNAL("clicked()"),self.setIvalSource)
         self.connect(self.btnSetCh, SIGNAL("clicked()"),self.setChannelSource)
         self.connect(self.btnSetZa, SIGNAL("clicked()"),self.setZA)
-        
-     
-      
-        
+        self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)
+ 
     
     def initDut(self):   
         self.dut = TOMO1S12V2I(comPort=self.inputboxCom.text())
@@ -87,11 +85,16 @@ class MyWidget(QtWidgets.QWidget):
         self.setSeqU() 
         self.setZA()
         self.setCurrentSource()
+        self.displayMeas()   
         
     def getParam(self):
         self.getSeqU()
         self.getZA()
         self.getCurrentSource()
+        
+    def setCal(self):
+        self.dut.setCal()
+        self.displayMeas() 
         
     def setSeqU(self):
         self.dut.setSeqU(I01=self.inputboxSuI01.text(), I02=self.inputboxSuI02.text(), 
@@ -122,13 +125,14 @@ class MyWidget(QtWidgets.QWidget):
         
     def setIonSource(self):
         if self.checkboxIon.checkState() == False:
-            sON= 0
+            sON= 1
         else :
-            sON= 1 
-        self.dut.setIon(En=sON)       
+            sON= 0 
+        self.dut.setIon(En=sON)   
+        self.displayMeas()       
         
     def getIonSource(self):
-        if self.dut.getIon() == 0 :
+        if self.dut.getIon() == 1 :
             self.checkboxIon.setChecked(False)
         else :
             self.checkboxIon.setChecked(True)
@@ -165,8 +169,8 @@ class MyWidget(QtWidgets.QWidget):
         if self.checkboxZa2.checkState() == False:
             sA2= 0
         else :
-            sA2= 1 
-        self.dut.setActiveZone(A1=sA1, A2=sA2) 
+            sA2= 2
+        self.dut.setActiveZone(ZA=sA1+sA2) 
         self.displayMeas()   
             
             
@@ -200,6 +204,12 @@ class MyWidget(QtWidgets.QWidget):
         self.imZa2.display(1000.0 * self.dut.getMeas("I2"))
         self.imS.display(1000.0 * self.dut.getMeas("ISOURCE"))
         self.vmS.display(self.dut.getMeas("VSOURCE"))
+        R = (float) (self.dut.getMeas("VSOURCE")) / (1000.0 * (float) (self.dut.getMeas("ISOURCE")) )
+        if R > 2700000.0 :
+            R = 2700000
+        if R < 0 : 
+            R = 2700000
+        self.Rcal.display(R)
         
             
     
@@ -267,6 +277,10 @@ class MyWidget(QtWidgets.QWidget):
         self.btnMeas = QtWidgets.QPushButton("Get MEASURE")
         self.btnMeas.setDefault(True)
         mainLayout.addWidget(self.btnMeas,2, 1)
+        
+        self.btnCal = QtWidgets.QPushButton("CALIBRATION")
+        self.btnCal.setDefault(True)
+        mainLayout.addWidget(self.btnCal,2, 0)
         
         
         lblTask = QtWidgets.QLabel()
@@ -432,20 +446,20 @@ class MyWidget(QtWidgets.QWidget):
         
         mainLayout = QtWidgets.QGridLayout()   
         
-        
         # ION
         self.checkboxIon = QtWidgets.QCheckBox()
-        self.checkboxIon.setChecked(True)  
+        self.checkboxIon.setChecked(False)  
         self.checkboxIon.toggled.connect(self.setIonSource)
         
         self.lblIon = QtWidgets.QLabel() 
-        self.lblIon.setText("Source ON/OFF")     
+        self.lblIon.setText("R CAL = 1kOhm")     
         palette = self.lblIon.palette()
         palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblIon.setPalette(palette)
         
         mainLayout.addWidget(self.lblIon,0, 0)
-        mainLayout.addWidget(self.checkboxIon,0, 1)
+        mainLayout.addWidget(self.checkboxIon,0, 1)     
+        
         
         # Source current
         self.inputboxIval = QtWidgets.QLineEdit()
@@ -525,7 +539,31 @@ class MyWidget(QtWidgets.QWidget):
         self.lblvmS.setPalette(palette)
         
         mainLayout.addWidget(self.lblvmS,4, 0)
-        mainLayout.addWidget(self.vmS,4, 1)       
+        mainLayout.addWidget(self.vmS,4, 1)  
+        
+        
+        
+        
+        self.Rcal = QtWidgets.QLCDNumber()
+        self.Rcal.setGeometry(0,0,100,100)
+        self.Rcal.setSegmentStyle(self.vmS.SegmentStyle.Flat)
+        palette = self.Rcal.palette()
+        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
+        palette.setColor(palette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
+        palette.setColor(palette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
+        self.Rcal.setPalette(palette)
+        self.Rcal.display(0)
+        
+        self.lblRcal = QtWidgets.QLabel() 
+        self.lblRcal.setText("Rsource (Ohm)")     
+        palette = self.lblRcal.palette()
+        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        self.lblRcal.setPalette(palette)
+        
+        mainLayout.addWidget(self.lblRcal,5, 0)
+        mainLayout.addWidget(self.Rcal,5, 1)
+        
+             
               
         
         mainLayout.setRowStretch(1, 1)

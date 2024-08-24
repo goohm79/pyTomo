@@ -11,13 +11,11 @@ class TOMO1S12V2I:
   def __init__(self, comPort="/dev/ttyACM0"):
 
     self.Meas = {}
-    self.ZoneActive = {}
+    self.ZA = 0
     self.IChannel= 0
     self.Chrelay= 0
     self.Led=0
     self.suEN = 0
-    self.ZoneActive["A1"]=0
-    self.ZoneActive["A2"]=0
     self.SeqU = {}
     self.SeqU ["I01"] = 50 # uA
     self.SeqU ["I02"] = 100 # uA
@@ -152,10 +150,9 @@ class TOMO1S12V2I:
          self.Ipol = int(ret)
          return self.Ipol 
     
-  def setActiveZone(self, A1=0, A2=0):
-    self.ZoneActive["A1"]=A1
-    self.ZoneActive["A2"]=A2
-    strVal = "AT+AZ=" + str(self.ZoneActive["A1"]) + str(self.ZoneActive["A2"]) +"\r\n"
+  def setActiveZone(self, ZA=0):
+    self.ZA=ZA
+    strVal = "AT+ZA=" + str(self.ZA) +"\r\n"
     self.wCom(data=strVal)
 
   def getActiveZone(self, A1=0, A2=0):
@@ -261,6 +258,9 @@ class TOMO1S12V2I:
            return self.Meas[channel]
        except:
            return None
+  def setCal(self):
+    strVal = "AT+CAL=1\r\n"
+    r = self.wCom(data=strVal)
        
   def setSeqU(self, I01=50, I02=100, TuA=10, TuB=120, TuC=30, TuD=120, TuE=10, msTempo=15, MeasPerDay=2,SourcePerWeek=1,Conf=1):
       self.SeqU ["I01"] = I01 # uA
