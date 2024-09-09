@@ -5,6 +5,8 @@
 
 import serial
 import serial.tools.list_ports
+from datetime import datetime
+
 
 
 class TOMO1S12V2I:
@@ -36,6 +38,10 @@ class TOMO1S12V2I:
     except:
         print("comPort: " + self.comPort + " could not connected to TOMO1S12V2I")
 
+# Deleting (Calling destructor)
+    def __del__(self):
+        del self.com
+        
   def listCom(self, data=None):
     return list(serial.tools.list_ports.comports())
     
@@ -71,12 +77,16 @@ class TOMO1S12V2I:
     self.com.flushOutput()
     a = data.encode('utf-8')
     self.com.write(data=a)
-    r = self.com.readlines()
+    r = self.com.readlines(2)
     return r[0]
 
 
-  def rCom(self):
-    ret = self.com.readlines()
+  def rLineCom(self):
+      ret = self.com.readline()
+      return ret.decode()
+  
+  def rCom(self):    
+    ret = self.com.readline()
     if ret.decode() == 'OK\r\n':
       return 999999999
     else:
@@ -121,6 +131,10 @@ class TOMO1S12V2I:
     strVal = "AT+EN=" + str(En)+"\r\n"
     self.wCom(data=strVal)
     
+  def su_StartSourceTask(self):
+    strVal = "AT+EN=2\r\n"
+    self.wCom(data=strVal)
+    
   def su_getMainTask(self):
     strVal = "AT+EN=?\r\n"
     ret = self.wrCom(data=strVal)
@@ -156,22 +170,10 @@ class TOMO1S12V2I:
     self.wCom(data=strVal)
 
   def getActiveZone(self, A1=0, A2=0):
-    strVal = "AT+AZ=?\r\n"
+    strVal = "AT+ZA=?\r\n"
     ret = self.wrCom(data=strVal)
     if ret != 999999999:
-         val = int(ret)
-         if val == 0 :
-             self.ZoneActive["A1"]=0
-             self.ZoneActive["A2"]=0
-         elif val ==1:
-             self.ZoneActive["A1"]=1
-             self.ZoneActive["A2"]=0
-         elif val == 2:
-             self.ZoneActive["A1"]=0
-             self.ZoneActive["A2"]=1
-         elif val == 3:
-             self.ZoneActive["A1"]=1
-             self.ZoneActive["A2"]=1
+          self.ZA = int(ret)
              
   def setSourceChannel(self, channel = 0):
     self.IChannel=channel
@@ -233,8 +235,8 @@ class TOMO1S12V2I:
      ret = self.wrMeasCom(data=strVal)
      if ret != 999999999:
          val = ret.decode()
-         tabStrVal = val.split(';', 21)    
-         idx = 5     
+         tabStrVal = val.split(';', 22)    
+         idx = 6     
          self.Meas["ISOURCE"]=float(tabStrVal[idx+1])
          self.Meas["VSOURCE"]=float(tabStrVal[idx+2])
          self.Meas["V1"]=float(tabStrVal[idx+3])
@@ -304,6 +306,34 @@ class TOMO1S12V2I:
          self.SeqU ["SourcePerWeek"] = int(tabStrVal[8]) # source per week
          self.SeqU ["TempoMs"] = int(tabStrVal[9]) # source per week
          
+  def setRTC(self):
+      dt = datetime.now()
+      y = (int)(dt.year) - 2000
+      dayName = datetime.today().strftime("%A")
+      wday = 0
+      if dayName == "monday" or dayName == "lundi":
+          wday = 1
+      if dayName == "tuesday" or dayName == "mardi":
+          wday = 2
+      if dayName == "wednesday" or dayName == "mercredi":
+          wday = 3
+      if dayName == "thursday" or dayName == "jeudi":
+          wday = 4
+      if dayName == "friday" or dayName == "vendredi":
+          wday = 5
+      if dayName == "saturday" or dayName == "samedi":
+          wday = 6    
+      if dayName == "sunday" or dayName == "dimanche":
+          wday = 7
+      strVal = "AT+RTC="
+      strVal +=  str(y) + ","
+      strVal +=  str(dt.month) + ","
+      strVal +=  str(dt.day) + ","
+      strVal +=  str(wday) + ","
+      strVal +=  str(dt.hour) + ","
+      strVal +=  str(dt.minute) + ","      
+      strVal +=  str(dt.second) +"\r\n"
+      self.wCom(data=strVal)
           
 
 # Press the green button in the gutter to run the script.

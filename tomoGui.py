@@ -1,12 +1,18 @@
 import sys
+import serial.tools.list_ports
 import time
 from timeloop import Timeloop
 from datetime import timedelta
 from PySide6.QtCore import SIGNAL
-from PySide6 import QtCore, QtWidgets, QtGui# -*- coding: utf-8 -*-
+from PySide6 import QtCore, QtWidgets, QtGui # -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette, QColor, QPixmap
 from tomo import TOMO1S12V2I
 from pickle import NONE
+
+import os.path
+from tkinter import filedialog
+import threading
+
 
 
 class MyWidget(QtWidgets.QWidget):
@@ -19,9 +25,7 @@ class MyWidget(QtWidgets.QWidget):
         palette = QPalette()
         palette.setColor(QPalette.Window, QColor(53, 53, 53))
         palette.setColor(QPalette.WindowText,QtGui.QColor(0, 0, 0))
-        app.setPalette(palette)
-        
-        
+        app.setPalette(palette)      
         
         self.createVoltMeterGroupBox()
         self.createZoneActiveGroupBox()
@@ -34,11 +38,8 @@ class MyWidget(QtWidgets.QWidget):
         self.lbllogo = QtWidgets.QLabel() 
         self.lbllogo.setPixmap(pixmap)
         
-        self.tl = Timeloop() 
-        @self.tl.job(interval=timedelta(seconds=2))
-        def sample_job_every_2s(self):
-            self.setPeriodicMeasure() 
-        
+        self.initState = 0  
+        self.t1State=0
         mainLayout = QtWidgets.QGridLayout()
         mainLayout.addWidget(self.currentSourceGroupBox,0, 0)
         mainLayout.addWidget(self.voltMeterGroupBox,1, 0)
@@ -62,154 +63,297 @@ class MyWidget(QtWidgets.QWidget):
         self.connect(self.btnSetCh, SIGNAL("clicked()"),self.setChannelSource)
         self.connect(self.btnSetZa, SIGNAL("clicked()"),self.setZA)
         self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)
- 
-    
+        self.connect(self.btnComList, SIGNAL("clicked()"),self.listPortCom)
+        self.connect(self.btnSetRTC, SIGNAL("clicked()"),self.setRTC)
+        self.connect(self.btnDoSuCh, SIGNAL("clicked()"),self.StartSourceTask)
+        self.connect(self.btnEnSeqU, SIGNAL("clicked()"),self.setEnSeqU)
+
+                      
+        self.listPortCom()
+        
+    def __del__(self):
+        self.stopThreadReadLine()
+        del self.dut
+        
+    def startThreadReadLine(self):  
+        if self.initState == 1:
+            try:
+                file  = QtWidgets.QFileDialog.getSaveFileName(self)
+                self.ExtractLogFileName = file[0]
+                self.ExtractLogFile = open(self.ExtractLogFileName, "w")
+                self.strLine = "Index;Time;Type;Polarité;Channel;Tu;ActiveZone;Isource;Vsource;V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,I1,I2\n\r"
+                self.ExtractLogFile.writelines(self.strLine)
+                self.ExtractLogFile.close()
+                # création de thread
+                self.t1 = threading.Thread(target=self.printThreadReadLine)
+                self.t1.start()
+                self.t1State=1
+            except:
+                self.t1State=0
+        
+    def stopThreadReadLine(self):
+        self.t1State=0
+        self.t1.join()
+               
+    def printThreadReadLine(self):   
+        while(self.t1State==1):
+            ExtStrLine = (str)(self.dut.rLineCom())
+            self.ExtractLogFile = open(self.ExtractLogFileName, "a")
+            self.ExtractLogFile.writelines(ExtStrLine)
+            self.ExtractLogFile.close()
+            print(ExtStrLine)
+
     def initDut(self):   
-        self.dut = TOMO1S12V2I(comPort=self.inputboxCom.text())
-        self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
-        self.getParam()
-        self.displayMeas()
+        if self.initState == 0:
+            portCOM = str(self.listboxCom.currentText())
+            self.dut = TOMO1S12V2I(comPort=portCOM)
+            self.btnConnect.setText("Disconnect")
+            self.textEditTerminal.setText("Connected to: " + portCOM)
+            self.checkboxIon.setChecked(True)
+            self.setIonSource()
+            self.dut.setIsource(IuA=0)
+            self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
+            self.textEditTerminal.append("Set power On")
+            self.inputboxIval.setText("100")
+            self.getParam()
+            self.displayMeas()
+            self.initState = 1
+        else:
+            if self.t1State == 1:
+                try:
+                    self.stopThreadReadLine()
+                except:
+                    self.t1State = 0
+            del self.dut
+            self.initState = 0
+            self.btnConnect.setText("CONNECT")
+            self.textEditTerminal.setText("COM PORT disconnected")
+            
+        
+    def listPortCom(self):
+        lCom = list(serial.tools.list_ports.comports())
+        self.listboxCom.clear()
+        for item in lCom:
+            self.listboxCom.addItem(str(item.device))
     
+    def setRTC(self):  
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set RTC")  
+            self.dut.setRTC()
+
+        
     def setPeriodicMeasure(self):
-        a = self.checkboxEperiodMeas.checkState()
-        if self.checkboxEperiodMeas.checkState() != False:
-            self.displayMeas()           
+        if self.t1State == 0:
+            a = self.checkboxEperiodMeas.checkState()
+            if self.checkboxEperiodMeas.checkState() != False:
+                self.displayMeas()           
             
     def setEnSeqU(self):
-        if self.checkboxEnSeqU.checkState() == True:
-            self.dut.su_setMainTask(1)
+        if self.t1State == 0:
+            self.textEditTerminal.append("Start Sequence unitaire")
+            self.btnEnSeqU.setText("SeqU STOP")
+            self.t1State = 1
+            self.dut.su_setMainTask(En=1)
+            self.startThreadReadLine()
         else:
-            self.dut.su_setMainTask(0)
+            try:
+                self.stopThreadReadLine()
+            except:
+                self.t1State = 0
+            self.textEditTerminal.append("Stop Sequence unitaire")
+            self.btnEnSeqU.setText("SeqU START")
+            self.dut.su_setMainTask(En=0)
+            self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
+            self.textEditTerminal.append("Set power On")
+                
                         
     def setParam(self): 
-        self.setSeqU() 
-        self.setZA()
-        self.setCurrentSource()
-        self.displayMeas()   
+        if self.t1State == 0:
+            self.setSeqU() 
+            self.setZA()
+            self.setCurrentSource()
+            self.displayMeas()   
         
     def getParam(self):
         self.getSeqU()
         self.getZA()
         self.getCurrentSource()
+        self.getMainTaskState()
+    
+    def StartSourceTask(self):
+        if self.t1State == 0:
+            self.textEditTerminal.append("Start Source Task")
+            self.startThreadReadLine()
+            if self.checkboxIP.isChecked() != False:
+                self.dut.setIpol(Pol=0);               
+            if self.checkboxIN.isChecked() != False:
+                self.dut.setIpol(Pol=1); 
+            self.dut.su_StartSourceTask()
+            time.sleep(20)
+            self.stopThreadReadLine()
+            self.textEditTerminal.append("End Source Task")
+      
+    
+    
+    def getMainTaskState(self):
+        if self.dut.su_getMainTask() ==1 : 
+            self.btnEnSeqU.setText("SeqU STOP")
+            self.t1State = 1
+        else:
+            self.t1State = 0
+                
         
     def setCal(self):
-        self.dut.setCal()
-        self.displayMeas() 
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set calibration")
+            self.dut.setCal()
+            self.displayMeas() 
         
     def setSeqU(self):
-        self.dut.setSeqU(I01=self.inputboxSuI01.text(), I02=self.inputboxSuI02.text(), 
-                         TuA=self.inputboxSuTuA.text(), TuB=self.inputboxSuTuB.text(), 
-                         TuC=self.inputboxSuTuC.text(), TuD=self.inputboxSuTuD.text(),
-                         TuE=self.inputboxSuTuE.text(), msTempo =self.inputboxSuTuMs.text() )
-    
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set Sequence unitaire")
+            self.dut.setSeqU(I01=self.inputboxSuI01.text(), I02=self.inputboxSuI02.text(), 
+                             TuA=self.inputboxSuTuA.text(), TuB=self.inputboxSuTuB.text(), 
+                             TuC=self.inputboxSuTuC.text(), TuD=self.inputboxSuTuD.text(),
+                             TuE=self.inputboxSuTuE.text(), msTempo =self.inputboxSuTuMs.text() )
+        
     def getSeqU(self):
-        self.dut.getSeqU()
-        self.inputboxSuI01.setText(str(self.dut.SeqU["I01"]))
-        self.inputboxSuI02.setText(str(self.dut.SeqU["I02"]))
-        self.inputboxSuTuA.setText(str(self.dut.SeqU["TuA"]))
-        self.inputboxSuTuB.setText(str(self.dut.SeqU["TuB"]))
-        self.inputboxSuTuC.setText(str(self.dut.SeqU["TuC"]))
-        self.inputboxSuTuD.setText(str(self.dut.SeqU["TuD"]))
-        self.inputboxSuTuE.setText(str(self.dut.SeqU["TuE"]))
-        self.inputboxSuTuMs.setText(str(self.dut.SeqU["TempoMs"]))
+        if self.t1State == 0:
+            self.textEditTerminal.append("Get Sequence unitaire")
+            self.dut.getSeqU()
+            self.inputboxSuI01.setText(str(self.dut.SeqU["I01"]))
+            self.inputboxSuI02.setText(str(self.dut.SeqU["I02"]))
+            self.inputboxSuTuA.setText(str(self.dut.SeqU["TuA"]))
+            self.inputboxSuTuB.setText(str(self.dut.SeqU["TuB"]))
+            self.inputboxSuTuC.setText(str(self.dut.SeqU["TuC"]))
+            self.inputboxSuTuD.setText(str(self.dut.SeqU["TuD"]))
+            self.inputboxSuTuE.setText(str(self.dut.SeqU["TuE"]))
+            self.inputboxSuTuMs.setText(str(self.dut.SeqU["TempoMs"]))
         
     def setCurrentSource(self):
-        self.setIvalSource()
-        self.setChannelSource()
-        self.setIonSource()        
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set I source")
+            self.setIvalSource()
+            self.setChannelSource()
+            self.setIonSource()        
         
     def getCurrentSource(self):
-        self.getIvalSource()
-        self.getChannelSource()
-        self.getIonSource()
+        if self.t1State == 0:
+            self.textEditTerminal.append("Get I source")
+            self.getIvalSource()
+            self.getChannelSource()
+            self.getIonSource()
         
     def setIonSource(self):
-        if self.checkboxIon.checkState() == False:
-            sON= 1
-        else :
-            sON= 0 
-        self.dut.setIon(En=sON)   
-        self.displayMeas()       
+        if self.t1State == 0:
+            if self.checkboxIon.checkState() == False:
+                sON= 1
+                self.textEditTerminal.append("Disconnect R CAL")
+            else :
+                self.textEditTerminal.append("Connect R CAL")
+                sON= 0 
+            self.dut.setIon(En=sON)   
+            self.displayMeas()       
         
-    def getIonSource(self):
-        if self.dut.getIon() == 1 :
-            self.checkboxIon.setChecked(False)
-        else :
-            self.checkboxIon.setChecked(True)
+    def getIonSource(self): 
+        if self.t1State == 0:
+            if self.dut.getIon() == 1 :
+                self.checkboxIon.setChecked(False)      
+            else :      
+                self.checkboxIon.setChecked(True)
          
     def setIvalSource(self):
-        Ival = int(self.inputboxIval.text())
-        if Ival < 0:
-            Ival = Ival * -1
-            self.dut.setIpol(Pol=0)
-        else:
-            self.dut.setIpol(Pol=1)        
-        self.dut.setIsource(IuA=Ival)
-        self.displayMeas()
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set Ival") 
+            Ival = int(self.inputboxIval.text())
+            if Ival < 0:
+                Ival = Ival * -1
+                self.dut.setIpol(Pol=0)
+            else:
+                self.dut.setIpol(Pol=1)        
+            self.dut.setIsource(IuA=Ival)
+            self.displayMeas()
            
     def getIvalSource(self):
-        Ival = self.dut.getIsource()
-        if self.dut.getIpol() == 0:
-            Ival = -1 * Ival        
-        self.inputboxIval.setText(str(Ival))
-        
+        if self.t1State == 0:
+            self.textEditTerminal.append("Get Ival") 
+            Ival = self.dut.getIsource()
+            if self.dut.getIpol() == 0:
+                Ival = -1 * Ival        
+            self.inputboxIval.setText(str(Ival))
+    
+      
     def setChannelSource(self):
-        self.dut.setSourceChannel(self.inputboxIchanel.text())
-        self.displayMeas()
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set channel source") 
+            self.dut.setSourceChannel(self.inputboxIchanel.text())
+            self.displayMeas()
         
     def getChannelSource(self):
-        self.inputboxIchanel.setText(str(self.dut.getSourceChannel()))
+        if self.t1State == 0:
+            self.textEditTerminal.append("Get channel source") 
+            self.inputboxIchanel.setText(str(self.dut.getSourceChannel()))
            
     
     def setZA(self): 
-        if self.checkboxZa1.checkState() == False:
-            sA1= 0
-        else :
-            sA1= 1
-        if self.checkboxZa2.checkState() == False:
-            sA2= 0
-        else :
-            sA2= 2
-        self.dut.setActiveZone(ZA=sA1+sA2) 
-        self.displayMeas()   
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set ZA") 
+            if self.checkboxZa1.checkState() == False:
+                sA1= 0
+            else :
+                sA1= 1
+            if self.checkboxZa2.checkState() == False:
+                sA2= 0
+            else :
+                sA2= 2
+            self.dut.setActiveZone(ZA=sA1+sA2) 
+            self.displayMeas()   
             
             
-    def getZA(self):    
-        self.dut.getActiveZone()                  
-        if self.dut.ZoneActive["A1"]== 0 :
-            self.checkboxZa1.setChecked(False) 
-        else:
-            self.checkboxZa1.setChecked(True)
-        if self.dut.ZoneActive["A2"]== 0 :
-            self.checkboxZa2.setChecked(False)            
-        else :
-            self.checkboxZa2.setChecked(True)
+    def getZA(self):  
+        if self.t1State == 0: 
+            self.textEditTerminal.append("Get ZA") 
+            self.dut.getActiveZone()                  
+            if self.dut.ZA== 0 :
+                self.checkboxZa1.setChecked(False) 
+                self.checkboxZa2.setChecked(False) 
+            if self.dut.ZA== 1 :
+                self.checkboxZa1.setChecked(True)
+                self.checkboxZa2.setChecked(False) 
+            if self.dut.ZA== 2 :
+                self.checkboxZa1.setChecked(False)
+                self.checkboxZa2.setChecked(True)
+            if self.dut.ZA== 3 :
+                self.checkboxZa1.setChecked(True)
+                self.checkboxZa2.setChecked(True)
         
             
     def displayMeas(self):
-        self.dut.setAcquire()
-        self.vm1.display(self.dut.getMeas("V1"))
-        self.vm2.display(self.dut.getMeas("V2"))
-        self.vm3.display(self.dut.getMeas("V3"))
-        self.vm4.display(self.dut.getMeas("V4"))
-        self.vm5.display(self.dut.getMeas("V5"))
-        self.vm6.display(self.dut.getMeas("V6"))
-        self.vm7.display(self.dut.getMeas("V7"))
-        self.vm8.display(self.dut.getMeas("V8"))
-        self.vm9.display(self.dut.getMeas("V9"))
-        self.vm10.display(self.dut.getMeas("V10"))
-        self.vm11.display(self.dut.getMeas("V11"))
-        self.vm12.display(self.dut.getMeas("V12"))
-        self.imZa1.display(1000.0 * self.dut.getMeas("I1"))
-        self.imZa2.display(1000.0 * self.dut.getMeas("I2"))
-        self.imS.display(1000.0 * self.dut.getMeas("ISOURCE"))
-        self.vmS.display(self.dut.getMeas("VSOURCE"))
-        R = (float) (self.dut.getMeas("VSOURCE")) / (1000.0 * (float) (self.dut.getMeas("ISOURCE")) )
-        if R > 2700000.0 :
-            R = 2700000
-        if R < 0 : 
-            R = 2700000
-        self.Rcal.display(R)
+        if self.t1State == 0:
+            self.textEditTerminal.append("Get measure")
+            self.dut.setAcquire()
+            self.vm1.display(self.dut.getMeas("V1"))
+            self.vm2.display(self.dut.getMeas("V2"))
+            self.vm3.display(self.dut.getMeas("V3"))
+            self.vm4.display(self.dut.getMeas("V4"))
+            self.vm5.display(self.dut.getMeas("V5"))
+            self.vm6.display(self.dut.getMeas("V6"))
+            self.vm7.display(self.dut.getMeas("V7"))
+            self.vm8.display(self.dut.getMeas("V8"))
+            self.vm9.display(self.dut.getMeas("V9"))
+            self.vm10.display(self.dut.getMeas("V10"))
+            self.vm11.display(self.dut.getMeas("V11"))
+            self.vm12.display(self.dut.getMeas("V12"))
+            self.imZa1.display(1000.0 * self.dut.getMeas("I1"))
+            self.imZa2.display(1000.0 * self.dut.getMeas("I2"))
+            self.imS.display(1000.0 * self.dut.getMeas("ISOURCE"))
+            self.vmS.display(self.dut.getMeas("VSOURCE"))
+            R = (float) (self.dut.getMeas("VSOURCE")) / ((float) (self.dut.getMeas("ISOURCE")) )
+            if R > 2700000.0 :
+                R = 2700000
+            if R < 0 : 
+                R = 2700000
+            self.Rcal.display(R)
         
             
     
@@ -219,28 +363,14 @@ class MyWidget(QtWidgets.QWidget):
         palette = self.terminalGroupBox.palette()
         palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         self.terminalGroupBox.setPalette(palette)
-        
         mainLayout = QtWidgets.QGridLayout()  
-        
+       
         # cmd line
-        self.inputboxCmdLine = QtWidgets.QLineEdit()
-        self.inputboxCmdLine.setText("AT=?")  
+        self.textEditTerminal = QtWidgets.QTextEdit()  
+        self.textEditTerminal.setText("")
         
-        self.lblCmdLine = QtWidgets.QLabel() 
-        self.lblCmdLine.setText("AT CMD")     
-        palette = self.lblCmdLine.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
-        self.lblCmdLine.setPalette(palette)
-        
-        mainLayout.addWidget(self.lblCmdLine,1, 0)
-        mainLayout.addWidget(self.inputboxCmdLine,1, 1)
-        
-        mainLayout.setRowStretch(1, 1)
-        mainLayout.setRowStretch(2, 1)
-        mainLayout.setColumnStretch(0, 1)
-        mainLayout.setColumnStretch(1, 1)
-        
-        self.controlGroupBox.setLayout(mainLayout)
+        mainLayout.addWidget(self.textEditTerminal,0, 0)
+        self.terminalGroupBox.setLayout(mainLayout)
               
     def createControlGroupBox(self):
         self.controlGroupBox = QtWidgets.QGroupBox("Control")
@@ -251,52 +381,53 @@ class MyWidget(QtWidgets.QWidget):
         
         mainLayout = QtWidgets.QGridLayout()  
         
-        # Com
-        self.inputboxCom = QtWidgets.QLineEdit()
-        self.inputboxCom.setText("/dev/ttyACM0")  
+        # Com    
+        self.listboxCom = QtWidgets.QComboBox()
+         #self.listboxCom.insertItem(0, "/dev/ttyACM0")
+       
         
         self.lblSuCom = QtWidgets.QLabel() 
-        self.lblSuCom.setText("Com Port")     
+        self.lblSuCom.setText("ComPort")     
         palette = self.lblSuCom.palette()
         palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuCom.setPalette(palette)
         
-        mainLayout.addWidget(self.lblSuCom,0, 0)
-        mainLayout.addWidget(self.inputboxCom,0, 1)
+       # mainLayout.addWidget(self.lblSuCom,0, 0)
+        mainLayout.addWidget(self.listboxCom,0, 1)
         
         # Init Comport
-        self.btnConnect = QtWidgets.QPushButton("INIT")
+        self.btnConnect = QtWidgets.QPushButton("CONNECT")
         self.btnConnect.setDefault(True)
         mainLayout.addWidget(self.btnConnect,1, 1)
         
           # Refresh listcom
-        self.btnComList = QtWidgets.QPushButton("List PORT COM")
+        self.btnComList = QtWidgets.QPushButton("ComPort LIST")
         self.btnComList.setDefault(True)
-        mainLayout.addWidget(self.btnComList,1, 0)
+        mainLayout.addWidget(self.btnComList,0, 0)
         
         self.btnMeas = QtWidgets.QPushButton("Get MEASURE")
         self.btnMeas.setDefault(True)
-        mainLayout.addWidget(self.btnMeas,2, 1)
+        mainLayout.addWidget(self.btnMeas,3, 1)
         
         self.btnCal = QtWidgets.QPushButton("CALIBRATION")
         self.btnCal.setDefault(True)
         mainLayout.addWidget(self.btnCal,2, 0)
         
+          # Set RTC  button 
+        self.btnSetRTC= QtWidgets.QPushButton("Set RTC")
+        self.btnSetRTC.setDefault(True)
+        mainLayout.addWidget(self.btnSetRTC,2, 1)
+        
         
         lblTask = QtWidgets.QLabel()
-        mainLayout.addWidget(lblTask,3, 0)
-        lblTask.setText("Enable task")
+        mainLayout.addWidget(lblTask,4, 0)
+        lblTask.setText("Sequence Unitaire task control:")
         
-        # Periodic Measure
-        self.checkboxEperiodMeas = QtWidgets.QCheckBox("Periodic Measure task")
-        self.checkboxEperiodMeas.setChecked(False) 
-        self.checkboxEperiodMeas.toggled.connect(self.setPeriodicMeasure)
-        mainLayout.addWidget(self.checkboxEperiodMeas,4, 0)
          # Seq Unitai Measure
-        self.checkboxEnSeqU = QtWidgets.QCheckBox("Sequence Unitaire task")
-        self.checkboxEnSeqU.setChecked(False) 
-        self.checkboxEnSeqU.toggled.connect(self.setEnSeqU)
-        mainLayout.addWidget(self.checkboxEnSeqU,5, 0)
+        self.btnEnSeqU = QtWidgets.QPushButton()
+        self.btnEnSeqU.setText("SeqU Start")
+        self.btnEnSeqU.setDefault(True)
+        mainLayout.addWidget(self.btnEnSeqU,5, 1)
         
         
         mainLayout.setRowStretch(1, 1)
@@ -498,6 +629,9 @@ class MyWidget(QtWidgets.QWidget):
         mainLayout.addWidget(self.lblIchanel,2, 0)
         mainLayout.addWidget(self.inputboxIchanel,2, 1)
         
+      
+        
+        
         # Isource meas
         self.imS = QtWidgets.QLCDNumber()
         self.imS.setGeometry(0,0,100,100)
@@ -563,7 +697,18 @@ class MyWidget(QtWidgets.QWidget):
         mainLayout.addWidget(self.lblRcal,5, 0)
         mainLayout.addWidget(self.Rcal,5, 1)
         
-             
+        # Set source unitaire on one channel        
+        self.checkboxIP = QtWidgets.QRadioButton('positive')
+        self.checkboxIP.setChecked(True)  
+        self.checkboxIN = QtWidgets.QRadioButton('negative')
+        self.checkboxIN.setChecked(False) 
+          
+        mainLayout.addWidget(self.checkboxIP,6, 0) 
+        mainLayout.addWidget(self.checkboxIN,7, 0)    
+        
+        self.btnDoSuCh = QtWidgets.QPushButton("Check SeqU pattern")
+        self.btnDoSuCh.setDefault(True)        
+        mainLayout.addWidget(self.btnDoSuCh,6, 2)    
               
         
         mainLayout.setRowStretch(1, 1)
