@@ -183,14 +183,22 @@ class MyWidget(QtWidgets.QWidget):
     def StartSourceTask(self):
         if self.t1State == 0:
             self.textEditTerminal.append("Start Source Task")
+            try:
+                self.stopThreadReadLine()
+            except:
+                self.t1State = 0
+            self.setChannelSource()
             self.startThreadReadLine()
             if self.checkboxIP.isChecked() != False:
-                self.dut.setIpol(Pol=0);               
+                self.dut.setIpol(Pol=1);               
             if self.checkboxIN.isChecked() != False:
-                self.dut.setIpol(Pol=1); 
+                self.dut.setIpol(Pol=0); 
             self.dut.su_StartSourceTask()
             time.sleep(20)
-            self.stopThreadReadLine()
+            try:
+                self.stopThreadReadLine()
+            except:
+                self.t1State = 0
             self.textEditTerminal.append("End Source Task")
       
     
