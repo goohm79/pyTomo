@@ -40,20 +40,20 @@ class MyWidget(QtWidgets.QWidget):
         
         self.initState = 0  
         self.t1State=0
-        mainLayout = QtWidgets.QGridLayout()
-        mainLayout.addWidget(self.currentSourceGroupBox,0, 0)
-        mainLayout.addWidget(self.voltMeterGroupBox,1, 0)
-        mainLayout.addWidget(self.zoneActiveGroupBox,0, 1)
-        mainLayout.addWidget(self.suParamGroupBox,1, 1)
-        mainLayout.addWidget(self.controlGroupBox,0, 2)
-        mainLayout.addWidget(self.terminalGroupBox,1, 2)
-        mainLayout.addWidget(self.lbllogo,2, 2)      
+        self.mainLayout = QtWidgets.QGridLayout()
+        self.mainLayout.addWidget(self.currentSourceGroupBox,0, 0)
+        self.mainLayout.addWidget(self.voltMeterGroupBox,1, 0)
+        self.mainLayout.addWidget(self.zoneActiveGroupBox,0, 1)
+        self.mainLayout.addWidget(self.suParamGroupBox,1, 1)
+        self.mainLayout.addWidget(self.controlGroupBox,0, 2)
+        self.mainLayout.addWidget(self.terminalGroupBox,1, 2)
+        self.mainLayout.addWidget(self.lbllogo,2, 2)      
         
-        mainLayout.setRowStretch(1, 1)
-        mainLayout.setRowStretch(2, 1)
-        mainLayout.setColumnStretch(0, 1)
-        mainLayout.setColumnStretch(1, 1)
-        self.setLayout(mainLayout)
+        self.mainLayout.setRowStretch(1, 1)
+        self.mainLayout.setRowStretch(2, 1)
+        self.mainLayout.setColumnStretch(0, 1)
+        self.mainLayout.setColumnStretch(1, 1)
+        self.setLayout(self.mainLayout)
         
         self.connect(self.btnConnect, SIGNAL("clicked()"),self.initDut)
         self.connect(self.btnMeas, SIGNAL("clicked()"),self.displayMeas)
@@ -86,8 +86,9 @@ class MyWidget(QtWidgets.QWidget):
                 self.ExtractLogFile.close()
                 # création de thread
                 self.t1 = threading.Thread(target=self.printThreadReadLine)
-                self.t1.start()
                 self.t1State=1
+                self.t1.start()
+                
             except:
                 self.t1State=0
         
@@ -102,6 +103,33 @@ class MyWidget(QtWidgets.QWidget):
             self.ExtractLogFile.writelines(ExtStrLine)
             self.ExtractLogFile.close()
             print(ExtStrLine)
+            
+    def startSourceTaskThreadReadLine(self):  
+        if self.initState == 1:
+            try:
+                # création de thread
+                self.t1 = threading.Thread(target=self.printSourceTaskThreadReadLine)
+                self.t1State=1
+                self.t1.start()
+                
+            except:
+                self.t1State=0
+    
+    def printSourceTaskThreadReadLine(self):   
+        while(self.t1State==1):
+            ExtStrLine = (str)(self.dut.rLineCom())
+            self.ExtractLogFile = open(self.ExtractLogFileName, "a")
+            self.ExtractLogFile.writelines(ExtStrLine)
+            self.ExtractLogFile.close()
+            try :
+                print(ExtStrLine)
+                tabStrVal = ExtStrLine.split(';', 22)
+                end = tabStrVal[5]
+                print(end)
+                if end == 'H' :
+                    self.t1State= 0   
+            except:                             
+                print(ExtStrLine)
 
     def initDut(self):   
         if self.initState == 0:
@@ -183,22 +211,23 @@ class MyWidget(QtWidgets.QWidget):
     def StartSourceTask(self):
         if self.t1State == 0:
             self.textEditTerminal.append("Start Source Task")
-            try:
-                self.stopThreadReadLine()
-            except:
-                self.t1State = 0
+            file  = QtWidgets.QFileDialog.getSaveFileName(self)
+            self.ExtractLogFileName = file[0]
+            self.ExtractLogFile = open(self.ExtractLogFileName, "w")
+            self.strLine = "Index;Time;Type;Polarité;Channel;Tu;ActiveZone;Isource;Vsource;V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,I1,I2\n\r"
+            self.ExtractLogFile.writelines(self.strLine)
+            self.ExtractLogFile.close()
             self.setChannelSource()
-            self.startThreadReadLine()
             if self.checkboxIP.isChecked() != False:
                 self.dut.setIpol(Pol=1);               
             if self.checkboxIN.isChecked() != False:
                 self.dut.setIpol(Pol=0); 
+            
             self.dut.su_StartSourceTask()
-            time.sleep(20)
-            try:
-                self.stopThreadReadLine()
-            except:
-                self.t1State = 0
+            self.startSourceTaskThreadReadLine()
+            self.t1.join()
+            self.dut.su_setMainTask(En=0)
+            self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
             self.textEditTerminal.append("End Source Task")
       
     
