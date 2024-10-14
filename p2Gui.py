@@ -21,7 +21,7 @@ import threading
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
         self.direction = ""
-        self.GroupBox = QtWidgets.QGroupBox("DIRECTION")
+        self.GroupBox = QtWidgets.QGroupBox("Direction")
         self.GroupBox.setGeometry(0,0,100,100)
             
         palette = self.GroupBox.palette()
@@ -41,10 +41,7 @@ class DIRECTION(QtWidgets.QWidget):
         self.b4 = QtWidgets.QRadioButton("RIGHT ➡️")
         self.b4.toggled.connect(lambda:self.setDir("right"))
         
-        
-    
-        mainLayout = QtWidgets.QGridLayout()
-            
+        mainLayout = QtWidgets.QGridLayout()    
         mainLayout.addWidget(self.b1,0, 0)
         mainLayout.addWidget(self.b2,0, 1)
         mainLayout.addWidget(self.b3,0, 2)
@@ -56,8 +53,7 @@ class DIRECTION(QtWidgets.QWidget):
         
     def getDir(self):
         return self.direction
-
-                       
+                    
 class DIGIT(QtWidgets.QWidget):
     def __init__(self, name = ""):
         self.name = name
@@ -248,14 +244,19 @@ class MYP2(QtWidgets.QWidget):
         None
         
     def setP2Prog(self):
-        if self.P2State  == 0:
-            self.P2State = 1
-            self.textEditTerminal.append("Enable P2 Program")
-            self.btnEnSeqU.setText("Enable P2 Prg.")
-        else:
+        if self.P2State  == 1:
             self.P2State = 0
-            self.textEditTerminal.append("Disable P2 Program")
-            self.btnEnSeqU.setText("Disable P2 Prg.")
+            self.textEditTerminal.append("Stop P2 Program")
+            self.textEditTerminal.append("Start TOMO Program")
+            self.btnEnSeqU.setText("Enable P2 Prg.")
+            self.dut.setP2toTomo()
+        else:
+            self.P2State = 1
+            self.textEditTerminal.append("Stop TOMO Program")
+            self.textEditTerminal.append("Start P2 Program")
+            self.btnEnSeqU.setText("Enable Tomo Prg.")
+            self.dut.setTomotoP2()
+       
 
                 
             
@@ -295,6 +296,12 @@ class MYP2(QtWidgets.QWidget):
             self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
             self.textEditTerminal.append("Set power On")
             self.displayMeas()
+            if self.dut.getP2() == 1:
+                self.btnEnSeqU.setText("Enable TOMO Prg.")
+                self.P2State  = 1
+            else:
+                self.P2State  = 0
+                self.btnEnSeqU.setText("Enable P2 Prg.")
             self.initState = 1
         else:
             if self.t1State == 1:
@@ -408,8 +415,8 @@ class MYP2(QtWidgets.QWidget):
         self.cmdGroupBox.setPalette(palette)
 
         self.stage = PMLINE("Etage")
-        self.xcolumn = PMLINE("X (meter)")
-        self.ycolumn = PMLINE("Y (meter)")
+        self.xcolumn = PMLINE("Position: X (m)")
+        self.ycolumn = PMLINE("& Y (m)")
         self.dir=DIRECTION()
         self.btnStartStop = QtWidgets.QPushButton("START")
         self.btnStartStop.setGeometry(QtCore.QRect(340, 30, 23, 20))

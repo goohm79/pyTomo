@@ -263,7 +263,29 @@ class TOMO1S12V2I:
   def setCal(self):
     strVal = "AT+CAL=1\r\n"
     r = self.wCom(data=strVal)
+
+  def setTomotoP2(self):
+    strVal = "AT+P2=1\r\n"
+    r = self.wCom(data=strVal)
+    
+  def setP2toTomo(self):
+    strVal = "AT+P2=0\r\n"
+    r = self.wCom(data=strVal)
+    
+  def getP2(self):
+    strVal = "AT+P2=?\r\n"
+    ret = self.wrCom(data=strVal)
+    if ret != 999999999:
+        return int(ret)
+    
+  def startP2(self):
+    strVal = "AT+SP2=1\r\n"
+    r = self.wCom(data=strVal)
        
+  def stopP2(self):
+    strVal = "AT+SP2=0\r\n"
+    r = self.wCom(data=strVal)
+
   def setSeqU(self, I01=50, I02=100, TuA=10, TuB=120, TuC=30, TuD=120, TuE=10, msTempo=15, MeasPerDay=2,SourcePerWeek=1,Conf=1):
       self.SeqU ["I01"] = I01 # uA
       self.SeqU ["I02"] = I02 # uA
