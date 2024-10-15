@@ -176,6 +176,8 @@ class MYP2(QtWidgets.QWidget):
         self.initState = 0  
         self.t1State = 0
         self.P2State = 0
+        self.pause =0
+        self.start = 0
     
         oneLayout= QtWidgets.QGridLayout()
         oneGroupBox = QtWidgets.QGroupBox("")
@@ -215,7 +217,7 @@ class MYP2(QtWidgets.QWidget):
                 file  = QtWidgets.QFileDialog.getSaveFileName(self)
                 self.ExtractLogFileName = file[0]
                 self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-                self.strLine = "Index;Time;Type;Polarité;Channel;Tu;ActiveZone;Isource;Vsource;V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,I1,I2\n\r"
+                self.strLine = "Index;V1;V2;V3;V4;V5;V6\n\r"
                 self.ExtractLogFile.writelines(self.strLine)
                 self.ExtractLogFile.close()
                 # création de thread
@@ -232,16 +234,35 @@ class MYP2(QtWidgets.QWidget):
                
     def printThreadReadLine(self):   
         while(self.t1State==1):
-            ExtStrLine = (str)(self.dut.rLineCom())
-            self.ExtractLogFile = open(self.ExtractLogFileName, "a")
-            self.ExtractLogFile.writelines(ExtStrLine)
-            self.ExtractLogFile.close()
-            print(ExtStrLine)
+            if self.pause != 1 :
+                ExtStrLine = (str)(self.dut.rLineCom())
+                self.ExtractLogFile = open(self.ExtractLogFileName, "a")
+                self.ExtractLogFile.writelines(ExtStrLine)
+                self.ExtractLogFile.close()
+                print(ExtStrLine)
+            else:
+                self.dut.flushCom()
             
     def setStartStop(self):
-        None
+        if self.start == 0:
+            self.start =1
+            self.btnStartStop.setText("STOP")
+            self.startThreadReadLine()
+        else:
+            self.start = 0
+            self.btnStartStop.setText("START")
+            try:
+                self.stopThreadReadLine()
+            except:
+                None
+            
     def setPause(self):
-        None
+        if self.pause ==0 :
+            self.pause =1
+            self.btnPause.setText("RESUME")
+        else:
+            self.pause =0
+            self.btnPause.setText("PAUSE")
         
     def setP2Prog(self):
         if self.P2State  == 1:
