@@ -18,9 +18,14 @@ import os.path
 from tkinter import filedialog
 import threading
 
+LARGEURCHARIOT = 1.5
+NWHEEL = 6
+ESPACEWHEEL= 0.3
+DISTWHEEL = 0.3
+
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
-        self.direction = ""
+        
         self.GroupBox = QtWidgets.QGroupBox("Direction")
         self.GroupBox.setGeometry(0,0,100,100)
             
@@ -33,6 +38,7 @@ class DIRECTION(QtWidgets.QWidget):
         
         self.b2 = QtWidgets.QRadioButton("UP ⬆️")
         self.b2.setChecked(True)
+        self.direction = "up"
         self.b2.toggled.connect(lambda:self.setDir("up"))
             
         self.b3 = QtWidgets.QRadioButton("⬇️ DOWN ")
@@ -96,9 +102,9 @@ class DIGIT(QtWidgets.QWidget):
         self.GroupBox.setLayout(mainLayout)
     
 class PMLINE(QtWidgets.QWidget):
-    def __init__(self, name = ""):
+    def __init__(self, name = "", delta = 1.0):
         self.name = name
-        self.name = name
+        self.delta = delta
         self.value = 0.0
         self.GroupBox = QtWidgets.QGroupBox(self.name)
         self.GroupBox.setGeometry(0,0,25,100)
@@ -137,11 +143,11 @@ class PMLINE(QtWidgets.QWidget):
         self.GroupBox.setLayout(mainLayout)
     
     def btnP(self):
-        self.value = self.getVal() + 1.0
+        self.value = self.getVal() + self.delta 
         self.setVal(self.value)
         
     def btnM(self):
-        self.value = self.getVal() - 1.0
+        self.value = self.getVal() - self.delta 
         self.setVal(self.value)
         
     def setVal(self, val):
@@ -177,8 +183,12 @@ class MYP2(QtWidgets.QWidget):
         self.t1State = 0
         self.P2State = 0
         self.pause =0
-        self.start = 0
-    
+        self.start = 0   
+        self.x = 0 
+        self.y = 0 
+        self.wheelSize = DISTWHEEL
+        self.WheelDist = ESPACEWHEEL
+
         oneLayout= QtWidgets.QGridLayout()
         oneGroupBox = QtWidgets.QGroupBox("")
         oneGroupBox.setGeometry(0,0,30,30)
@@ -216,10 +226,14 @@ class MYP2(QtWidgets.QWidget):
             try:
                 file  = QtWidgets.QFileDialog.getSaveFileName(self)
                 self.ExtractLogFileName = file[0]
-                self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-                self.strLine = "Index;V1;V2;V3;V4;V5;V6\n\r"
-                self.ExtractLogFile.writelines(self.strLine)
-                self.ExtractLogFile.close()
+                if not os.path.exists(self.ExtractLogFileName):
+                    self.ExtractLogFile = open(self.ExtractLogFileName, "w")
+                    self.strLine = "LEVEL;DIRECTION;X;Y;MEAS\r"
+                    self.ExtractLogFile.writelines(self.strLine)
+                    self.ExtractLogFile.close()
+                self.x = self.xcolumn.getVal()
+                self.y = self.ycolumn.getVal()
+                self.dut.startP2()
                 # création de thread
                 self.t1 = threading.Thread(target=self.printThreadReadLine)
                 self.t1State=1
@@ -229,17 +243,57 @@ class MYP2(QtWidgets.QWidget):
                 self.t1State=0
         
     def stopThreadReadLine(self):
+        self.ExtractLogFile.close()  
         self.t1State=0
         self.t1.join()
+        self.dut.stopP2()
                
     def printThreadReadLine(self):   
         while(self.t1State==1):
             if self.pause != 1 :
                 ExtStrLine = (str)(self.dut.rLineCom())
-                self.ExtractLogFile = open(self.ExtractLogFileName, "a")
-                self.ExtractLogFile.writelines(ExtStrLine)
-                self.ExtractLogFile.close()
-                print(ExtStrLine)
+                if len(ExtStrLine) !=0:
+                    self.x = self.xcolumn.getVal()
+                    self.y = self.ycolumn.getVal()
+                    tabDatas = ExtStrLine[:-2].split(';')
+                    fileStr = ""
+                    self.ExtractLogFile = open(self.ExtractLogFileName, "a")
+                    if self.dir.direction == "left":
+                        self.x = self.x - self.wheelSize
+                        self.xcolumn.setVal("{0:.2f}".format(self.x))  
+                        for i in range(NWHEEL):
+                            fileStr = str(self.stage.getVal())+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
+                            self.ExtractLogFile.writelines(fileStr)  
+                            
+                    elif self.dir.direction == "right":
+                        self.x = self.x + self.wheelSize
+                        self.xcolumn.setVal("{0:.2f}".format(self.x))  
+                        for i in range(NWHEEL):
+                            fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
+                            self.ExtractLogFile.writelines(fileStr)   
+                                       
+                    elif self.dir.direction == "up":
+                        self.y = self.y + self.wheelSize
+                        self.ycolumn.setVal("{0:.2f}".format(self.y))
+                        for i in range(NWHEEL):
+                            fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
+                            self.ExtractLogFile.writelines(fileStr)     
+                                         
+                    elif self.dir.direction == "down":
+                        self.y = self.y - self.wheelSize
+                        self.ycolumn.setVal("{0:.2f}".format(self.y))
+                        for i in range(NWHEEL):
+                            fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
+                            self.ExtractLogFile.writelines(fileStr)    
+                                 
+                    self.ExtractLogFile.close()  
+                    self.vm1.lcd.display(float(tabDatas[1]))
+                    self.vm2.lcd.display(float(tabDatas[2]))
+                    self.vm3.lcd.display(float(tabDatas[3]))
+                    self.vm4.lcd.display(float(tabDatas[4]))
+                    self.vm5.lcd.display(float(tabDatas[5]))
+                    self.vm6.lcd.display(float(tabDatas[6]))
+                    print(ExtStrLine)
             else:
                 self.dut.flushCom()
             
@@ -435,9 +489,9 @@ class MYP2(QtWidgets.QWidget):
         palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         self.cmdGroupBox.setPalette(palette)
 
-        self.stage = PMLINE("Etage")
-        self.xcolumn = PMLINE("Position: X (m)")
-        self.ycolumn = PMLINE("& Y (m)")
+        self.stage = PMLINE(name="Etage", delta=1.0)
+        self.xcolumn = PMLINE(name="Position: X (m)",delta=LARGEURCHARIOT)
+        self.ycolumn = PMLINE(name="& Y (m)", delta=LARGEURCHARIOT)
         self.dir=DIRECTION()
         self.btnStartStop = QtWidgets.QPushButton("START")
         self.btnStartStop.setGeometry(QtCore.QRect(340, 30, 23, 20))

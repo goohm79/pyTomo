@@ -40,6 +40,7 @@ class MyWidget(QtWidgets.QWidget):
         
         self.initState = 0  
         self.t1State=0
+        self.P2State=0
         self.mainLayout = QtWidgets.QGridLayout()
         self.mainLayout.addWidget(self.currentSourceGroupBox,0, 0)
         self.mainLayout.addWidget(self.voltMeterGroupBox,1, 0)
@@ -67,9 +68,15 @@ class MyWidget(QtWidgets.QWidget):
         self.connect(self.btnSetRTC, SIGNAL("clicked()"),self.setRTC)
         self.connect(self.btnDoSuCh, SIGNAL("clicked()"),self.StartSourceTask)
         self.connect(self.btnEnSeqU, SIGNAL("clicked()"),self.setEnSeqU)
-
-                      
+        self.connect(self.btnEnP2Prog, SIGNAL("clicked()"),self.setP2Prog)
         self.listPortCom()
+    
+    def listPortCom(self):
+        lCom = list(serial.tools.list_ports.comports())
+        self.listboxCom.clear()
+        for item in lCom:
+            self.listboxCom.addItem(str(item.device))
+
         
     def __del__(self):
         self.stopThreadReadLine()
@@ -146,6 +153,12 @@ class MyWidget(QtWidgets.QWidget):
             self.getParam()
             self.displayMeas()
             self.initState = 1
+            if self.dut.getP2() == 1:
+                self.btnEnP2Prog.setText("Enable TOMO Prg.")
+                self.P2State  = 1
+            else:
+                self.P2State  = 0
+                self.btnEnP2Prog.setText("Enable P2 Prg.")
         else:
             if self.t1State == 1:
                 try:
@@ -158,11 +171,7 @@ class MyWidget(QtWidgets.QWidget):
             self.textEditTerminal.setText("COM PORT disconnected")
             
         
-    def listPortCom(self):
-        lCom = list(serial.tools.list_ports.comports())
-        self.listboxCom.clear()
-        for item in lCom:
-            self.listboxCom.addItem(str(item.device))
+
     
     def setRTC(self):  
         if self.t1State == 0:
@@ -193,6 +202,20 @@ class MyWidget(QtWidgets.QWidget):
             self.dut.su_setMainTask(En=0)
             self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
             self.textEditTerminal.append("Set power On")
+            
+    def setP2Prog(self):
+        if self.P2State  == 1:
+            self.P2State = 0
+            self.textEditTerminal.append("Stop P2 Program")
+            self.textEditTerminal.append("Start TOMO Program")
+            self.btnEnP2Prog.setText("Enable P2 Prg.")
+            self.dut.setP2toTomo()
+        else:
+            self.P2State = 1
+            self.textEditTerminal.append("Stop TOMO Program")
+            self.textEditTerminal.append("Start P2 Program")
+            self.btnEnP2Prog.setText("Enable Tomo Prg.")
+            self.dut.setTomotoP2()
                 
                         
     def setParam(self): 
@@ -214,7 +237,7 @@ class MyWidget(QtWidgets.QWidget):
             file  = QtWidgets.QFileDialog.getSaveFileName(self)
             self.ExtractLogFileName = file[0]
             self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-            self.strLine = "Index;Time;Type;Polarité;Channel;Tu;ActiveZone;Isource;Vsource;V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,I1,I2\n\r"
+            self.strLine = "Index;Time;Type;Polarité;Channel;Tu;ActiveZone;Isource;Vsource;V1;V2;V3;V4;V5;V6;V7;V8;V9;V10;V11;V12;I1;I2\n\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
             self.setChannelSource()
@@ -432,15 +455,17 @@ class MyWidget(QtWidgets.QWidget):
        # mainLayout.addWidget(self.lblSuCom,0, 0)
         mainLayout.addWidget(self.listboxCom,0, 1)
         
+             # Refresh listcom
+        self.btnComList = QtWidgets.QPushButton("ComPort LIST")
+        self.btnComList.setDefault(True)
+        mainLayout.addWidget(self.btnComList,0, 0)
+        
         # Init Comport
         self.btnConnect = QtWidgets.QPushButton("CONNECT")
         self.btnConnect.setDefault(True)
         mainLayout.addWidget(self.btnConnect,1, 1)
         
-          # Refresh listcom
-        self.btnComList = QtWidgets.QPushButton("ComPort LIST")
-        self.btnComList.setDefault(True)
-        mainLayout.addWidget(self.btnComList,0, 0)
+      
         
         self.btnMeas = QtWidgets.QPushButton("Get MEASURE")
         self.btnMeas.setDefault(True)
@@ -466,6 +491,12 @@ class MyWidget(QtWidgets.QWidget):
         self.btnEnSeqU.setDefault(True)
         mainLayout.addWidget(self.btnEnSeqU,5, 1)
         
+         # Seq Unitai Measure
+        self.btnEnP2Prog = QtWidgets.QPushButton()
+        self.btnEnP2Prog.setText("Switch Tomo1S12V2I to P2")
+        self.btnEnP2Prog.setDefault(True)
+        mainLayout.addWidget(self.btnEnP2Prog,6, 1)
+            
         
         mainLayout.setRowStretch(1, 1)
         mainLayout.setRowStretch(2, 1)
