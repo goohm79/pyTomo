@@ -11,7 +11,7 @@ from tomo import TOMO1S12V2I
 from tomoWaterFlow import TOMOWATERFLOW
 from pickle import NONE
 
-from PySide6.QtWidgets import QApplication, QWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsRectItem
+from PySide6.QtWidgets import QApplication, QWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QMainWindow
 from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QBrush, QPen, QColor, QPainter
 
@@ -115,6 +115,12 @@ class DIGIT(QtWidgets.QWidget):
         mainLayout.setRowStretch(1,1)
         self.GroupBox.setLayout(mainLayout)
     
+    def checkState(self):
+        if self.check.checkState() == False:
+            return False
+        else:
+            return True
+    
 class PMLINE(QtWidgets.QWidget):
     def __init__(self, name = "", delta = 1.0):
         self.name = name
@@ -172,7 +178,7 @@ class PMLINE(QtWidgets.QWidget):
         self.value = float(self.inputbox.text())
         return self.value
 
-class MYP2(QtWidgets.QWidget):
+class MYP2(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('P2')
@@ -182,6 +188,9 @@ class MYP2(QtWidgets.QWidget):
         palette.setColor(QPalette.Window, QColor(53, 53, 53))
         palette.setColor(QPalette.WindowText,QtGui.QColor(0, 0, 0))
         app.setPalette(palette)      
+        
+        self.centralWidget = QWidget()
+        self.setCentralWidget(self.centralWidget)
         
         self.createVoltMeterGroupBox()
         self.createControlGroupBox()
@@ -202,6 +211,7 @@ class MYP2(QtWidgets.QWidget):
         self.y = 0 
         self.wheelSize = DISTWHEEL
         self.WheelDist = ESPACEWHEEL
+        self.ActiveWheel = []
 
         oneLayout= QtWidgets.QGridLayout()
         oneGroupBox = QtWidgets.QGroupBox("")
@@ -222,7 +232,7 @@ class MYP2(QtWidgets.QWidget):
         self.mainLayout.addWidget(self.cmdGroupBox,1,1)
         self.mainLayout.setRowStretch(1, 1)
         self.mainLayout.setColumnStretch(1, 1)
-        self.setLayout(self.mainLayout)
+        self.centralWidget.setLayout(self.mainLayout)
         
         self.connect(self.btnConnect, SIGNAL("clicked()"),self.initDut)
         self.connect(self.btnComList, SIGNAL("clicked()"),self.listPortCom)
@@ -230,6 +240,7 @@ class MYP2(QtWidgets.QWidget):
         self.connect(self.btnStartStop, SIGNAL("clicked()"),self.setStartStop)
         self.connect(self.btnPause, SIGNAL("clicked()"),self.setPause)    
         self.listPortCom()
+        #self.setCentralWidget(oneGroupBox)
         
     def __del__(self):
         self.stopThreadReadLine()
@@ -262,12 +273,13 @@ class MYP2(QtWidgets.QWidget):
         self.t1.join()
         self.dut.stopP2()
                
-    def printThreadReadLine(self):   
-        self.getActiveWheel()
+    def printThreadReadLine(self):       
         while(self.t1State==1):
-            if self.pause != 1 :
+            if self.pause != 1 :              
                 ExtStrLine = (str)(self.dut.rLineCom())
                 if len(ExtStrLine) !=0:
+                    self.getActiveWheel()
+                    print(str(self.ActiveWheel))
                     self.x = self.xcolumn.getVal()
                     self.y = self.ycolumn.getVal()
                     tabDatas = ExtStrLine[:-2].split(';')
@@ -280,30 +292,42 @@ class MYP2(QtWidgets.QWidget):
                             if self.ActiveWheel[i] == True:
                                 fileStr = str(self.stage.getVal())+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
                                 self.ExtractLogFile.writelines(fileStr)  
+                                self.view.set(float(self.x), float(self.y + ((i-2.5)*self.WheelDist)), float(tabDatas[i+1]))
+                        self.view.loadImage()
+                        self.view.saveImage()
                             
                     elif self.dir.direction == "right":
                         self.x = self.x + self.wheelSize
                         self.xcolumn.setVal("{0:.2f}".format(self.x))  
                         for i in range(NWHEEL):
                             if self.ActiveWheel[i] == True:
-                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
+                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((6-i)-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
                                 self.ExtractLogFile.writelines(fileStr)   
+                                self.view.set(float(self.x), float(self.y + (((6-i)-2.5)*self.WheelDist)), float(tabDatas[6-i]))
+                        self.view.loadImage()
+                        self.view.saveImage()
                                        
-                    elif self.dir.direction == "up":
+                    elif self.dir.direction == "down":
                         self.y = self.y + self.wheelSize
                         self.ycolumn.setVal("{0:.2f}".format(self.y))
                         for i in range(NWHEEL):
                             if self.ActiveWheel[i] == True:
                                 fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
-                                self.ExtractLogFile.writelines(fileStr)     
+                                self.ExtractLogFile.writelines(fileStr)
+                                self.view.set(float(self.x + ((i-2.5)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
+                        self.view.loadImage()
+                        self.view.saveImage()
                                          
-                    elif self.dir.direction == "down":
+                    elif self.dir.direction == "up":
                         self.y = self.y - self.wheelSize
                         self.ycolumn.setVal("{0:.2f}".format(self.y))
                         for i in range(NWHEEL):
                             if self.ActiveWheel[i] == True:
-                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
-                                self.ExtractLogFile.writelines(fileStr)    
+                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
+                                self.ExtractLogFile.writelines(fileStr)   
+                                self.view.set( float(self.x + (((6-i)-2.5)*self.WheelDist)), float(self.y), float(tabDatas[6-i]))
+                        self.view.loadImage()
+                        self.view.saveImage()
                                  
                     self.ExtractLogFile.close()  
                     self.vm1.lcd.display(float(tabDatas[1]))
@@ -330,7 +354,13 @@ class MYP2(QtWidgets.QWidget):
                 None
     
     def getActiveWheel(self):
-        self.ActiveWheel = [self.vm1.checkState(), self.vm2.checkState(), self.vm3.checkState(), self.vm4.checkState(), self.vm5.checkState(), self.vm6.checkState()]
+        self.ActiveWheel = []
+        self.ActiveWheel.append(self.vm1.checkState())
+        self.ActiveWheel.append(self.vm2.checkState())
+        self.ActiveWheel.append(self.vm3.checkState())
+        self.ActiveWheel.append(self.vm4.checkState())
+        self.ActiveWheel.append(self.vm5.checkState())
+        self.ActiveWheel.append(self.vm6.checkState())
         
               
     def setPause(self):
@@ -554,6 +584,8 @@ class MYP2(QtWidgets.QWidget):
         mainLayout.setColumnStretch(1, 1)
         self.cmdGroupBox.setLayout(mainLayout)
         
+        
+        
        
     def createVoltMeterGroupBox(self):
         self.voltMeterGroupBox = QtWidgets.QGroupBox("VoltMeters  [mV]")
@@ -585,7 +617,9 @@ class MYP2(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 
+
     widget = MYP2()
+    
     widget.resize(2000, 1000)
     widget.show()
 

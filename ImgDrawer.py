@@ -147,6 +147,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         if not (self.zoomPinned() and self.hasPhoto()):
             self._zoom = 0
         #self.resetView(SCALE_FACTOR ** self._zoom)
+        self._photo.show()
 
     def zoomLevel(self):
         return self._zoom
@@ -213,10 +214,10 @@ class  ImgDrawer(QtWidgets.QWidget):
         # palette.setColor(QPalette.WindowText,QtGui.QColor(0, 0, 0))
         # app.setPalette(palette)      
         
-        self._path = PATH + 'P2.png'
+        self._path = ""
         self.dimX = dimX + 0.6
         self.dimY = dimY + 0.6
-        self.initImage(self._path)
+        self.initImage(PATH + 'P2.png')
                
         self.blueLimit = ColorLimit(colorName= "blue", low = -2000.0, high = 2000.0)
         self.greenLimit = ColorLimit(colorName= "green", low = -2000.0, high = 2000.0)
@@ -286,7 +287,9 @@ class  ImgDrawer(QtWidgets.QWidget):
                 QtCore.QStandardPaths.StandardLocation.PicturesLocation)[0]
         if path := QtWidgets.QFileDialog.getSaveFileName(
             self, 'Open Image', start)[0]:
-            self.saveImage(path)           
+            self._path = path  
+            self.saveImage()             
+            self.reInitImage(self._path)        
         
         
     def handleOpen(self):
@@ -299,6 +302,7 @@ class  ImgDrawer(QtWidgets.QWidget):
             if not (pixmap := QtGui.QPixmap(path)).isNull():
                 self.viewer.setPhoto(pixmap)
                 self._path = path
+                self.reInitImage( self._path)
                 
             else:
                 QtWidgets.QMessageBox.warning(self, 'Error',
@@ -363,17 +367,37 @@ class  ImgDrawer(QtWidgets.QWidget):
         gray_img = self.img.convert('L')
         gray_img.save(PATH + 'goo_gray.png')                
         self.rgb_img = gray_img.convert('RGB')
-        self.rgb_img.save(PATH + 'rgb_image.jpg')
+        self._path = PATH + 'rgb_image.png'
+        self.rgb_img.save(self._path)
         self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")
+     
+    def reInitImage(self, _path = PATH + 'P2.png'):  
+        self.img = Image.open(_path)
+        self.width = self.img.width
+        self.height = self.img.height           
+        self.ratioX =  self.width /  self.dimX 
+        self.ratioY =  self.height /  self.dimY
+        gray_img = self.img.convert('L')             
+        self.rgb_img = gray_img.convert('RGB')
+        self._path = _path
+        self.rgb_img.save(self._path)
+        self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")   
         
         
-    def loadImage(self, _path = PATH + 'goo_gray2.png'):
-        self.image_qt = QImage(_path)    
-        self.viewer.setPhoto(QPixmap.fromImage(self.image_qt.scaled(self.width, self.height, 
-                                        Qt.KeepAspectRatio, 
-                                        Qt.SmoothTransformation)))
-    def saveImage(self, _path = PATH + 'goo_gray2.png'):
-        self.rgb_img.save(_path)     
+    def loadImage(self):
+        self.labelCoords.clear()
+        if not (pixmap := QtGui.QPixmap(self._path)).isNull():
+                self.viewer.setPhoto(pixmap)
+                self.reInitImage( self._path)
+                
+        # self.image_qt = QImage(self._path)    
+        # self.viewer.setPhoto(QPixmap.fromImage(self.image_qt.scaled(self.width, self.height, 
+        #                                 Qt.KeepAspectRatio, 
+        #                                 Qt.SmoothTransformation)))
+     
+   
+    def saveImage(self):
+        self.rgb_img.save(self._path)     
         
 
 if __name__ == '__main__':
