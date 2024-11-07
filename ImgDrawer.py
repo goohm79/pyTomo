@@ -364,9 +364,9 @@ class  ImgDrawer(QtWidgets.QWidget):
         self.height = self.img.height           
         self.ratioX =  self.width /  self.dimX 
         self.ratioY =  self.height /  self.dimY
-        gray_img = self.img.convert('L')
-        gray_img.save(PATH + 'goo_gray.png')                
-        self.rgb_img = gray_img.convert('RGB')
+        # gray_img = self.img.convert('L')
+        # gray_img.save(PATH + 'goo_gray.png')                
+        self.rgb_img = self.img.convert('RGB')
         self._path = PATH + 'rgb_image.png'
         self.rgb_img.save(self._path)
         self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")
@@ -376,9 +376,8 @@ class  ImgDrawer(QtWidgets.QWidget):
         self.width = self.img.width
         self.height = self.img.height           
         self.ratioX =  self.width /  self.dimX 
-        self.ratioY =  self.height /  self.dimY
-        gray_img = self.img.convert('L')             
-        self.rgb_img = gray_img.convert('RGB')
+        self.ratioY =  self.height /  self.dimY     
+        self.rgb_img = self.img.convert('RGB')
         self._path = _path
         self.rgb_img.save(self._path)
         self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")   
@@ -388,7 +387,9 @@ class  ImgDrawer(QtWidgets.QWidget):
         self.labelCoords.clear()
         if not (pixmap := QtGui.QPixmap(self._path)).isNull():
                 self.viewer.setPhoto(pixmap)
-                self.reInitImage( self._path)
+               # self.reInitImage(self._path)
+                
+                
                 
         # self.image_qt = QImage(self._path)    
         # self.viewer.setPhoto(QPixmap.fromImage(self.image_qt.scaled(self.width, self.height, 

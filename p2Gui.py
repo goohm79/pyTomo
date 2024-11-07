@@ -4,7 +4,7 @@ import time
 from ImgDrawer import ImgDrawer
 from timeloop import Timeloop
 from datetime import timedelta
-from PySide6.QtCore import SIGNAL
+from PySide6.QtCore import SIGNAL, QObject, QThread, QTimer
 from PySide6 import QtCore, QtWidgets, QtGui # -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette, QColor, QPixmap
 from tomo import TOMO1S12V2I
@@ -178,6 +178,20 @@ class PMLINE(QtWidgets.QWidget):
         self.value = float(self.inputbox.text())
         return self.value
 
+class Worker(QObject):
+    finished = SIGNAL
+    progress = SIGNAL
+
+    def run(self):
+        """Long-running task."""
+        while(True):
+            time.sleep(1)
+            self.progress.emit()
+    
+    def stop(self):
+        self.finished.emit()
+        
+        
 class MYP2(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -245,6 +259,7 @@ class MYP2(QMainWindow):
     def __del__(self):
         self.stopThreadReadLine()
         del self.dut
+    
         
     def startThreadReadLine(self):  
         if self.initState == 1:
@@ -257,17 +272,23 @@ class MYP2(QMainWindow):
                     self.ExtractLogFile.writelines(self.strLine)
                     self.ExtractLogFile.close()
                 self.x = self.xcolumn.getVal()
-                self.y = self.ycolumn.getVal()
                 self.dut.startP2()
                 # création de thread
                 self.t1 = threading.Thread(target=self.printThreadReadLine)
                 self.t1State=1
                 self.t1.start()
                 
+                self.timer = QTimer()
+                self.timer.setInterval(5000)
+                self.timer.timeout.connect(self.timerImageViewrefresh)
+                self.timer.start()
+               
+                
             except:
                 self.t1State=0
         
     def stopThreadReadLine(self):
+        self.timer.stop()
         self.ExtractLogFile.close()  
         self.t1State=0
         self.t1.join()
@@ -293,8 +314,6 @@ class MYP2(QMainWindow):
                                 fileStr = str(self.stage.getVal())+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
                                 self.ExtractLogFile.writelines(fileStr)  
                                 self.view.set(float(self.x), float(self.y + ((i-2.5)*self.WheelDist)), float(tabDatas[i+1]))
-                        self.view.loadImage()
-                        self.view.saveImage()
                             
                     elif self.dir.direction == "right":
                         self.x = self.x + self.wheelSize
@@ -304,8 +323,6 @@ class MYP2(QMainWindow):
                                 fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((6-i)-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
                                 self.ExtractLogFile.writelines(fileStr)   
                                 self.view.set(float(self.x), float(self.y + (((6-i)-2.5)*self.WheelDist)), float(tabDatas[6-i]))
-                        self.view.loadImage()
-                        self.view.saveImage()
                                        
                     elif self.dir.direction == "down":
                         self.y = self.y + self.wheelSize
@@ -315,8 +332,6 @@ class MYP2(QMainWindow):
                                 fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
                                 self.ExtractLogFile.writelines(fileStr)
                                 self.view.set(float(self.x + ((i-2.5)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
-                        self.view.loadImage()
-                        self.view.saveImage()
                                          
                     elif self.dir.direction == "up":
                         self.y = self.y - self.wheelSize
@@ -326,8 +341,6 @@ class MYP2(QMainWindow):
                                 fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
                                 self.ExtractLogFile.writelines(fileStr)   
                                 self.view.set( float(self.x + (((6-i)-2.5)*self.WheelDist)), float(self.y), float(tabDatas[6-i]))
-                        self.view.loadImage()
-                        self.view.saveImage()
                                  
                     self.ExtractLogFile.close()  
                     self.vm1.lcd.display(float(tabDatas[1]))
@@ -338,8 +351,12 @@ class MYP2(QMainWindow):
                     self.vm6.lcd.display(float(tabDatas[6]))
                     print(ExtStrLine)
             else:
-                self.dut.flushCom()
-            
+                self.dut.flushCom()  
+                  
+    def timerImageViewrefresh(self):
+        self.view.saveImage()
+        self.view.loadImage()
+               
     def setStartStop(self):
         if self.start == 0:
             self.start =1
