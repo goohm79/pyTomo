@@ -10,7 +10,7 @@ from tomo import TOMO1S12V2I
 from pickle import NONE
 
 import os.path
-from tkinter import filedialog
+
 import threading
 
 
@@ -421,7 +421,7 @@ class MyWidget(QtWidgets.QWidget):
         self.terminalGroupBox = QtWidgets.QGroupBox("Terminal")
         self.terminalGroupBox.setGeometry(0,0,30,100)
         palette = self.terminalGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.terminalGroupBox.setPalette(palette)
         mainLayout = QtWidgets.QGridLayout()  
        
@@ -436,7 +436,7 @@ class MyWidget(QtWidgets.QWidget):
         self.controlGroupBox = QtWidgets.QGroupBox("Control")
         self.controlGroupBox.setGeometry(0,0,30,100)
         palette = self.controlGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.controlGroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()  
@@ -449,7 +449,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuCom = QtWidgets.QLabel() 
         self.lblSuCom.setText("ComPort")     
         palette = self.lblSuCom.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuCom.setPalette(palette)
         
        # mainLayout.addWidget(self.lblSuCom,0, 0)
@@ -510,7 +510,7 @@ class MyWidget(QtWidgets.QWidget):
         self.suParamGroupBox = QtWidgets.QGroupBox("Sequence Unitaire")
         self.suParamGroupBox.setGeometry(0,0,30,100)
         palette = self.suParamGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.suParamGroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()   
@@ -522,7 +522,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuI01 = QtWidgets.QLabel() 
         self.lblSuI01.setText("IO1 (uA)")     
         palette = self.lblSuI01.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuI01.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuI01,0, 0)
@@ -535,7 +535,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuI02 = QtWidgets.QLabel() 
         self.lblSuI02.setText("IO2 (uA)")     
         palette = self.lblSuI02.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuI02.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuI02,1, 0)
@@ -548,7 +548,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuTuA = QtWidgets.QLabel() 
         self.lblSuTuA.setText("TuA (s)")     
         palette = self.lblSuTuA.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuTuA.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuTuA,2, 0)
@@ -561,7 +561,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuTuB = QtWidgets.QLabel() 
         self.lblSuTuB.setText("TuB (s)")     
         palette = self.lblSuTuB.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuTuB.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuTuB,3, 0)
@@ -574,7 +574,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuTuC = QtWidgets.QLabel() 
         self.lblSuTuC.setText("TuC (s)")     
         palette = self.lblSuTuC.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuTuC.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuTuC,4, 0)
@@ -587,7 +587,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuTuD = QtWidgets.QLabel() 
         self.lblSuTuD.setText("TuD (s)")     
         palette = self.lblSuTuD.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuTuD.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuTuD,5, 0)
@@ -600,7 +600,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuTuE = QtWidgets.QLabel() 
         self.lblSuTuE.setText("TuE (s)")     
         palette = self.lblSuTuE.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuTuE.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuTuE,6, 0)
@@ -613,7 +613,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblSuTuMs = QtWidgets.QLabel() 
         self.lblSuTuMs.setText("TuMs (ms)")     
         palette = self.lblSuTuMs.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuTuMs.setPalette(palette)
         
         mainLayout.addWidget(self.lblSuTuMs,7, 0)
@@ -640,7 +640,7 @@ class MyWidget(QtWidgets.QWidget):
         self.currentSourceGroupBox = QtWidgets.QGroupBox("Current Source")
         self.currentSourceGroupBox.setGeometry(0,0,30,100)
         palette = self.currentSourceGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.currentSourceGroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()   
@@ -653,7 +653,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblIon = QtWidgets.QLabel() 
         self.lblIon.setText("R CAL = 1kOhm")     
         palette = self.lblIon.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblIon.setPalette(palette)
         
         mainLayout.addWidget(self.lblIon,0, 0)
@@ -667,7 +667,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblIval = QtWidgets.QLabel() 
         self.lblIval.setText("Current (uA)")     
         palette = self.lblIval.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblIval.setPalette(palette)
         
         # Set Param button 
@@ -685,7 +685,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblIchanel = QtWidgets.QLabel() 
         self.lblIchanel.setText("Source Channel")     
         palette = self.lblIchanel.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblIchanel.setPalette(palette)
         
         # Set Param button 
@@ -705,9 +705,9 @@ class MyWidget(QtWidgets.QWidget):
         self.imS.setGeometry(0,0,100,100)
         self.imS.setSegmentStyle(self.imS.SegmentStyle.Flat)
         palette = self.imS.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
-        palette.setColor(palette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
-        palette.setColor(palette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
+        palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
+        palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
         self.imS.setPalette(palette)
         self.imS.display(0)
         
@@ -715,7 +715,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblimS = QtWidgets.QLabel() 
         self.lblimS.setText("Isource (uA)")     
         palette = self.lblimS.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblimS.setPalette(palette)
         
         mainLayout.addWidget(self.lblimS,3, 0)
@@ -727,9 +727,9 @@ class MyWidget(QtWidgets.QWidget):
         self.vmS.setGeometry(0,0,100,100)
         self.vmS.setSegmentStyle(self.vmS.SegmentStyle.Flat)
         palette = self.vmS.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
-        palette.setColor(palette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
-        palette.setColor(palette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
+        palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
+        palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
         self.vmS.setPalette(palette)
         self.vmS.display(0)
         
@@ -737,7 +737,7 @@ class MyWidget(QtWidgets.QWidget):
         self.lblvmS = QtWidgets.QLabel() 
         self.lblvmS.setText("Vsource (mV)")     
         palette = self.lblvmS.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblvmS.setPalette(palette)
         
         mainLayout.addWidget(self.lblvmS,4, 0)
@@ -750,16 +750,16 @@ class MyWidget(QtWidgets.QWidget):
         self.Rcal.setGeometry(0,0,100,100)
         self.Rcal.setSegmentStyle(self.vmS.SegmentStyle.Flat)
         palette = self.Rcal.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
-        palette.setColor(palette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
-        palette.setColor(palette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85)) # foreground color
+        palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border # background color
+        palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
         self.Rcal.setPalette(palette)
         self.Rcal.display(0)
         
         self.lblRcal = QtWidgets.QLabel() 
         self.lblRcal.setText("Rsource (Ohm)")     
         palette = self.lblRcal.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(31, 160, 85))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(31, 160, 85))
         self.lblRcal.setPalette(palette)
         
         mainLayout.addWidget(self.lblRcal,5, 0)
@@ -790,7 +790,7 @@ class MyWidget(QtWidgets.QWidget):
         self.zoneActiveGroupBox = QtWidgets.QGroupBox("Zone Active  [uA]")
         self.zoneActiveGroupBox.setGeometry(0,0,30,100)
         palette = self.zoneActiveGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.zoneActiveGroupBox.setPalette(palette)
         
               
@@ -808,7 +808,7 @@ class MyWidget(QtWidgets.QWidget):
                 # get the palette
         palette = self.lblza1.palette()
         # foreground color
-        palette.setColor(palette.WindowText, QtGui.QColor(223, 109, 20))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(223, 109, 20))
         self.lblza1.setPalette(palette)
         self.lblza2.setPalette(palette)
 
@@ -823,10 +823,10 @@ class MyWidget(QtWidgets.QWidget):
         # get the palette
         palette = self.imZa1.palette()
         # foreground color
-        palette.setColor(palette.WindowText, QtGui.QColor(223, 109, 20))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(223, 109, 20))
         # background color
-        palette.setColor(palette.Light, QtGui.QColor(53, 53, 53))  # "light" border
-        palette.setColor(palette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
+        palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border
+        palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
         
         self.imZa1.setPalette(palette)
         self.imZa2.setPalette(palette)
@@ -861,7 +861,7 @@ class MyWidget(QtWidgets.QWidget):
         self.voltMeterGroupBox.setGeometry(0,0,100,100)
         
         palette = self.voltMeterGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.voltMeterGroupBox.setPalette(palette)
         
         self.lblvm1 = QtWidgets.QLabel()
@@ -893,7 +893,7 @@ class MyWidget(QtWidgets.QWidget):
         # get the palette
         palette = self.lblvm1.palette()
         # foreground color
-        palette.setColor(palette.WindowText, QtGui.QColor(49, 140, 231))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(49, 140, 231))
         self.lblvm1.setPalette(palette)
         self.lblvm2.setPalette(palette)
         self.lblvm3.setPalette(palette)
@@ -951,10 +951,10 @@ class MyWidget(QtWidgets.QWidget):
         # get the palette
         palette = self.vm1.palette()
         # foreground color
-        palette.setColor(palette.WindowText, QtGui.QColor(49, 140, 231))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(49, 140, 231))
         # background color
-        palette.setColor(palette.Light, QtGui.QColor(53, 53, 53))  # "light" border
-        palette.setColor(palette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
+        palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border
+        palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
         
         self.vm1.setPalette(palette)
         self.vm2.setPalette(palette)
