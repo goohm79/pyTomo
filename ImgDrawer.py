@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QPalette, QBrush, QPen, QColor, QPainter, QPixmap, QImage
 from PySide6.QtOpenGL import *
 
-PATH = '/home/goohm/github/pyTomo/img/'
+PATH = '/home/goo/Images/'
 PIXSIZE = 3   
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -18,6 +18,13 @@ SCALE_FACTOR = 1.25
 
 class ColorLimit(QtWidgets.QWidget):
     def __init__(self, colorName= "grey", low = -2000.0, high = 2000.0):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
+        
         self.lLimit = low
         self.hLimit = high
         self.colorName = colorName
@@ -25,7 +32,7 @@ class ColorLimit(QtWidgets.QWidget):
         self.GroupBox = QtWidgets.QGroupBox()
         self.GroupBox.setGeometry(0,0,25,25)
         palette = self.GroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         self.GroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()
@@ -35,14 +42,16 @@ class ColorLimit(QtWidgets.QWidget):
         self.lbl.setGeometry(0,0,25,25)
         palette = self.lbl.palette()
         r,g,b = ImageColor.getrgb(self.colorName)
-        palette.setColor(QPalette.WindowText, QtGui.QColor(r, g, b))
+        palette.setColor(palette.WindowText, QtGui.QColor(r, g, b))
         self.lbl.setPalette(palette)
         
         self.lLimitInputbox = QtWidgets.QLineEdit()
+        self.lLimitInputbox.setPalette(pal)
         self.lLimitInputbox.setGeometry(0,0,25,25)
         self.setLlimit(self.lLimit)
         
         self.hLimitInputbox = QtWidgets.QLineEdit()
+        self.hLimitInputbox.setPalette(pal)
         self.hLimitInputbox.setGeometry(0,0,25,25)
         self.setHlimit(self.hLimit)
         
@@ -201,11 +210,18 @@ class PhotoViewer(QtWidgets.QGraphicsView):
     def leaveEvent(self, event):
         self.coordinatesChanged.emit(QtCore.QPoint())
         super().leaveEvent(event)
-        
+  
+ 
         
 class  ImgDrawer(QtWidgets.QWidget):
     def __init__(self, dimX=135, dimY=72.2):
         super().__init__()
+        
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
         
         self.setWindowTitle('P2')
         # app.setStyle("Fusion")   
@@ -217,7 +233,7 @@ class  ImgDrawer(QtWidgets.QWidget):
         self._path = ""
         self.dimX = dimX + 0.6
         self.dimY = dimY + 0.6
-        self.initImage(PATH + 'P2.png')
+        self.initImage()
                
         self.blueLimit = ColorLimit(colorName= "blue", low = -2000.0, high = 2000.0)
         self.greenLimit = ColorLimit(colorName= "green", low = -2000.0, high = 2000.0)
@@ -236,21 +252,24 @@ class  ImgDrawer(QtWidgets.QWidget):
             QtCore.Qt.AlignmentFlag.AlignRight |
             QtCore.Qt.AlignmentFlag.AlignCenter)
         palette = self.labelCoords.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(254,254,254))
+        palette.setColor(palette.WindowText, QtGui.QColor(254,254,254))
         self.labelCoords.setPalette(palette)
         
         
         
         self.buttonOpen = QtWidgets.QPushButton(self)
         self.buttonOpen.setText('Open Image')
+        self.buttonOpen.setPalette(pal)
         self.buttonOpen.clicked.connect(self.handleOpen)
         
         self.buttonZoomOut = QtWidgets.QPushButton(self)
         self.buttonZoomOut.setText('Zoom out')
+        self.buttonZoomOut.setPalette(pal)
         self.buttonZoomOut.clicked.connect(self.handleZoomOut)       
         
         self.buttonSave = QtWidgets.QPushButton(self)
         self.buttonSave.setText('Save Image')
+        self.buttonSave.setPalette(pal)
         self.buttonSave.clicked.connect(self.handleSave) 
         
         self.layoutimage.addWidget(self.viewer,0, 0, 1, 5)
@@ -261,9 +280,9 @@ class  ImgDrawer(QtWidgets.QWidget):
         self.layoutimage.addWidget(self.orangeLimit.GroupBox,1,3)
         self.layoutimage.addWidget(self.redLimit.GroupBox,1,4)
         
-        self.layoutimage.addWidget(self.buttonOpen, 2,0)
-        self.layoutimage.addWidget(self.buttonSave, 2,1)
-        self.layoutimage.addWidget(self.buttonZoomOut, 2,2)
+        self.layoutimage.addWidget(self.buttonOpen, 2,1)
+        self.layoutimage.addWidget(self.buttonSave, 2,2)
+        self.layoutimage.addWidget(self.buttonZoomOut, 2,3)
         self.layoutimage.addWidget(self.labelCoords, 2,4)
         self.layoutimage.setColumnStretch(5,5)
         self.layoutimage.setRowStretch(0,0)
@@ -358,8 +377,8 @@ class  ImgDrawer(QtWidgets.QWidget):
             r,g,b = ImageColor.getrgb("grey")
         self.draw.rectangle(((x1, y1), (x2, y2)), fill=(r,g,b,transparency))
      
-    def initImage(self, _path = PATH + 'P2.png'):  
-        self.img = Image.open(_path)
+    def initImage(self, _destPath = PATH + 'rgb_image.png'):  
+        self.img = Image.open(PATH + 'P2.png')
         self.width = self.img.width
         self.height = self.img.height           
         self.ratioX =  self.width /  self.dimX 
@@ -367,7 +386,7 @@ class  ImgDrawer(QtWidgets.QWidget):
         # gray_img = self.img.convert('L')
         # gray_img.save(PATH + 'goo_gray.png')                
         self.rgb_img = self.img.convert('RGB')
-        self._path = PATH + 'rgb_image.png'
+        self._path = _destPath
         self.rgb_img.save(self._path)
         self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")
      
@@ -406,19 +425,7 @@ if __name__ == '__main__':
     img = ImgDrawer(dimX=135, dimY=72.2)
     img.resize(2000, 1000)
     img.show()
-    img.update()
-    for y in range (361):
-        for x in range (90):
-            z = x *1.5
-            t = y* 0.2
-            img.set(z + 0.05,t+0.2,random.randint(-1000, 0))
-            img.set(z +0.32,t+0.2,random.randint(-1000, 0))
-            img.set(z +0.61,t+0.2,random.randint(-1000, 0))
-            img.set(z +0.89,t+0.2,random.randint(-1000, 0))
-            img.set(z +1.17,t+0.2,random.randint(-1000, 0))
-            img.set(z +1.45,t+0.2,random.randint(-1000, 0))
-    img.saveImage() 
-    img.loadImage()
+    
       
 
     sys.exit(app.exec())

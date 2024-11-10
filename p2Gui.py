@@ -8,15 +8,17 @@ from PySide6.QtCore import SIGNAL, QObject, QThread, QTimer
 from PySide6 import QtCore, QtWidgets, QtGui # -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette, QColor, QPixmap
 from tomo import TOMO1S12V2I
-
+from tomoWaterFlow import TOMOWATERFLOW
+from pickle import NONE
 
 from PySide6.QtWidgets import QApplication, QWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QMainWindow
 from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QBrush, QPen, QColor, QPainter
 
 import os.path
-#from tkinter import filedialog
+from tkinter import filedialog
 import threading
+import datetime
 
 LARGEURCHARIOT = 1.5
 NWHEEL = 6
@@ -26,27 +28,56 @@ DISTWHEEL = 0.3
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
         
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
         self.GroupBox = QtWidgets.QGroupBox("Direction")
         self.GroupBox.setGeometry(0,0,100,100)
             
         palette = self.GroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
-        self.GroupBox.setPalette(palette)
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        
+        
     
         self.b1= QtWidgets.QRadioButton("⬅️ LEFT ")
         self.b1.toggled.connect(lambda:self.setDir("left"))
+        self.b1.setStyleSheet("QRadioButton::indicator::checked"
+                                        "{"
+                                        "background-color : red"
+                                        "}")
+        self.b1.setPalette(pal)
         
         self.b2 = QtWidgets.QRadioButton("UP ⬆️")
         self.b2.setChecked(True)
         self.direction = "up"
         self.b2.toggled.connect(lambda:self.setDir("up"))
+        self.b2.setStyleSheet("QRadioButton::indicator::checked"
+                                        "{"
+                                        "background-color : green"
+                                        "}")
+        self.b2.setPalette(pal)
             
         self.b3 = QtWidgets.QRadioButton("⬇️ DOWN ")
         self.b3.toggled.connect(lambda:self.setDir("down"))
+        self.b3.setStyleSheet("QRadioButton::indicator::checked"
+                                        "{"
+                                        "background-color : orange"
+                                        "}")
+        self.b3.setPalette(pal)
         
         self.b4 = QtWidgets.QRadioButton("RIGHT ➡️")
         self.b4.toggled.connect(lambda:self.setDir("right"))
+        self.b4.setStyleSheet("QRadioButton::indicator::checked"
+                                        "{"
+                                        "background-color : yellow"
+                                        "}")
+        self.b4.setPalette(pal)
         
+       
+        self.GroupBox.setPalette(palette)
         mainLayout = QtWidgets.QGridLayout()    
         mainLayout.addWidget(self.b1,0, 0)
         mainLayout.addWidget(self.b2,0, 1)
@@ -99,7 +130,7 @@ class DIGIT(QtWidgets.QWidget):
         self.check.setChecked(True) 
         palette = self.check.palette()
         # foreground color
-        palette.setColor(QPalette.WindowText, QtGui.QColor(49, 140, 231))
+        palette.setColor(palette.WindowText, QtGui.QColor(49, 140, 231))
         # background color
         palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border
         palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
@@ -142,15 +173,23 @@ class PMLINE(QtWidgets.QWidget):
         
         self.inputbox = QtWidgets.QLineEdit()
         self.inputbox.setGeometry(0,0,25,25)
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        self.inputbox.setPalette(pal)      
+        
         self.setVal(self.value)
         
         self.p = QtWidgets.QPushButton("+")
         self.p.setGeometry(0,0,25,25)
+        self.p.setPalette(pal)
         self.p.setDefault(True)
         self.p.clicked.connect(lambda:self.btnP())
 
         self.m = QtWidgets.QPushButton("-")
         self.m.setGeometry(0,0,25,25)
+        self.m.setPalette(pal)
         self.m.setDefault(True)
         self.m.clicked.connect(lambda:self.btnM())
  
@@ -171,7 +210,8 @@ class PMLINE(QtWidgets.QWidget):
         
     def setVal(self, val):
         self.value = val
-        self.inputbox.setText(str(self.value)) 
+        self.inputbox.setText(str("{0:.2f}".format(self.value)))
+        self.value = float(self.inputbox.text())
         
     def getVal(self):
         self.value = float(self.inputbox.text())
@@ -230,13 +270,13 @@ class MYP2(QMainWindow):
         oneGroupBox = QtWidgets.QGroupBox("")
         oneGroupBox.setGeometry(0,0,30,30)
         palette = oneGroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         oneGroupBox.setPalette(palette)
         oneLayout.addWidget(self.controlGroupBox,0, 0)
         oneLayout.addWidget(self.terminalGroupBox,0,1)
         oneLayout.addWidget(self.voltMeterGroupBox,0,2)
         oneLayout.addWidget(self.lbllogo,0,3)
-        oneLayout.setRowStretch(0,0)
+        oneLayout.setRowStretch(1,1)
         oneLayout.setColumnStretch(1, 1)  
         oneGroupBox.setLayout(oneLayout)
         
@@ -252,6 +292,7 @@ class MYP2(QMainWindow):
         self.connect(self.btnEnSeqU, SIGNAL("clicked()"),self.setP2Prog)
         self.connect(self.btnStartStop, SIGNAL("clicked()"),self.setStartStop)
         self.connect(self.btnPause, SIGNAL("clicked()"),self.setPause)    
+        self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)
         self.listPortCom()
         #self.setCentralWidget(oneGroupBox)
         
@@ -263,11 +304,15 @@ class MYP2(QMainWindow):
     def startThreadReadLine(self):  
         if self.initState == 1:
             try:
-                file  = QtWidgets.QFileDialog.getSaveFileName(self)
+                self.logDateTime = datetime.datetime.now()
+                self.logFileName = "log_stage-" + str(self.stage.getVal()) + "_zone-" + self.inputboxZone.text() + "_date-" + str(self.logDateTime)
+                file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
+                self.view.initImage(self.logFileName + ".png")
+                self.logFileName = file
                 self.ExtractLogFileName = file[0]
                 if not os.path.exists(self.ExtractLogFileName):
                     self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-                    self.strLine = "LEVEL;DIRECTION;X;Y;MEAS\r"
+                    self.strLine = "LEVEL;ZONE;DIRECTION;X;Y;MEAS\r"
                     self.ExtractLogFile.writelines(self.strLine)
                     self.ExtractLogFile.close()
                 self.x = self.xcolumn.getVal()
@@ -280,90 +325,111 @@ class MYP2(QMainWindow):
                 self.timer = QTimer()
                 self.timer.setInterval(5000)
                 self.timer.timeout.connect(self.timerImageViewrefresh)
-                self.timer.start()
-               
-                
+                self.timer.start() 
             except:
                 self.t1State=0
         
     def stopThreadReadLine(self):
-        self.timer.stop()
-        self.ExtractLogFile.close()  
-        self.t1State=0
-        self.t1.join()
-        self.dut.stopP2()
+        try: 
+            self.timer.stop()
+            self.ExtractLogFile.close()  
+            self.t1State=0
+            self.t1.join()
+            self.dut.stopP2()
+        except:
+            NONE
                
-    def printThreadReadLine(self):       
+    def printThreadReadLine(self):      
         while(self.t1State==1):
-            if self.pause != 1 :              
-                ExtStrLine = (str)(self.dut.rLineCom())
-                if len(ExtStrLine) !=0:
-                    self.getActiveWheel()
-                    print(str(self.ActiveWheel))
-                    self.x = self.xcolumn.getVal()
-                    self.y = self.ycolumn.getVal()
-                    tabDatas = ExtStrLine[:-2].split(';')
-                    fileStr = ""
-                    self.ExtractLogFile = open(self.ExtractLogFileName, "a")
-                    if self.dir.direction == "left":
-                        self.x = self.x - self.wheelSize
-                        self.xcolumn.setVal("{0:.2f}".format(self.x))  
-                        for i in range(NWHEEL):
-                            if self.ActiveWheel[i] == True:
-                                fileStr = str(self.stage.getVal())+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
-                                self.ExtractLogFile.writelines(fileStr)  
-                                self.view.set(float(self.x), float(self.y + ((i-2.5)*self.WheelDist)), float(tabDatas[i+1]))
-                            
-                    elif self.dir.direction == "right":
-                        self.x = self.x + self.wheelSize
-                        self.xcolumn.setVal("{0:.2f}".format(self.x))  
-                        for i in range(NWHEEL):
-                            if self.ActiveWheel[i] == True:
-                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((6-i)-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
-                                self.ExtractLogFile.writelines(fileStr)   
-                                self.view.set(float(self.x), float(self.y + (((6-i)-2.5)*self.WheelDist)), float(tabDatas[6-i]))
-                                       
-                    elif self.dir.direction == "down":
-                        self.y = self.y + self.wheelSize
-                        self.ycolumn.setVal("{0:.2f}".format(self.y))
-                        for i in range(NWHEEL):
-                            if self.ActiveWheel[i] == True:
-                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
-                                self.ExtractLogFile.writelines(fileStr)
-                                self.view.set(float(self.x + ((i-2.5)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
-                                         
-                    elif self.dir.direction == "up":
-                        self.y = self.y - self.wheelSize
-                        self.ycolumn.setVal("{0:.2f}".format(self.y))
-                        for i in range(NWHEEL):
-                            if self.ActiveWheel[i] == True:
-                                fileStr = str(self.stage.getVal()) + ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
-                                self.ExtractLogFile.writelines(fileStr)   
-                                self.view.set( float(self.x + (((6-i)-2.5)*self.WheelDist)), float(self.y), float(tabDatas[6-i]))
-                                 
-                    self.ExtractLogFile.close()  
-                    self.vm1.lcd.display(float(tabDatas[1]))
-                    self.vm2.lcd.display(float(tabDatas[2]))
-                    self.vm3.lcd.display(float(tabDatas[3]))
-                    self.vm4.lcd.display(float(tabDatas[4]))
-                    self.vm5.lcd.display(float(tabDatas[5]))
-                    self.vm6.lcd.display(float(tabDatas[6]))
-                    print(ExtStrLine)
+            if self.pause != 1 :  
+                try:             
+                    ExtStrLine = (str)(self.dut.rLineCom())
+                    if len(ExtStrLine) !=0:
+                        self.getActiveWheel()
+                        print(str(self.ActiveWheel))
+                        self.x = self.xcolumn.getVal()
+                        self.y = self.ycolumn.getVal()
+                        tabDatas = ExtStrLine[:-2].split(';')
+                        fileStr = ""
+                        self.ExtractLogFile = open(self.ExtractLogFileName, "a")
+                        if self.dir.direction == "left":
+                            self.x = self.x - self.wheelSize
+                            self.xcolumn.setVal("{0:.2f}".format(self.x))  
+                            for i in range(NWHEEL):
+                                if self.ActiveWheel[i] == True:
+                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
+                                    self.ExtractLogFile.writelines(fileStr)  
+                                    self.view.set(float(self.x), float(self.y + ((i-2.5)*self.WheelDist)), float(tabDatas[i+1]))
+                                
+                        elif self.dir.direction == "right":
+                            self.x = self.x + self.wheelSize
+                            self.xcolumn.setVal("{0:.2f}".format(self.x))  
+                            for i in range(NWHEEL):
+                                if self.ActiveWheel[i] == True:
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((6-i)-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
+                                    self.ExtractLogFile.writelines(fileStr)   
+                                    self.view.set(float(self.x), float(self.y + (((6-i)-2.5)*self.WheelDist)), float(tabDatas[6-i]))
+                                           
+                        elif self.dir.direction == "down":
+                            self.y = self.y + self.wheelSize
+                            self.ycolumn.setVal("{0:.2f}".format(self.y))
+                            for i in range(NWHEEL):
+                                if self.ActiveWheel[i] == True:
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
+                                    self.ExtractLogFile.writelines(fileStr)
+                                    self.view.set(float(self.x + ((i-2.5)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
+                                             
+                        elif self.dir.direction == "up":
+                            self.y = self.y - self.wheelSize
+                            self.ycolumn.setVal("{0:.2f}".format(self.y))
+                            for i in range(NWHEEL):
+                                if self.ActiveWheel[i] == True:
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
+                                    self.ExtractLogFile.writelines(fileStr)   
+                                    self.view.set( float(self.x + (((6-i)-2.5)*self.WheelDist)), float(self.y), float(tabDatas[6-i]))
+                                     
+                        self.ExtractLogFile.close()  
+                        self.vm1.lcd.display(float(tabDatas[1]))
+                        self.vm2.lcd.display(float(tabDatas[2]))
+                        self.vm3.lcd.display(float(tabDatas[3]))
+                        self.vm4.lcd.display(float(tabDatas[4]))
+                        self.vm5.lcd.display(float(tabDatas[5]))
+                        self.vm6.lcd.display(float(tabDatas[6]))
+                        print(ExtStrLine)
+                except:
+                    self.dut.flushCom() 
+                    try:
+                        self.ExtractLogFile.close() 
+                    except:
+                        NONE 
             else:
                 self.dut.flushCom()  
                   
     def timerImageViewrefresh(self):
-        self.view.saveImage()
-        self.view.loadImage()
+        try:
+            self.view.saveImage()
+            self.view.loadImage()
+        except:
+            NONE
                
     def setStartStop(self):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
         if self.start == 0:
             self.start =1
             self.btnStartStop.setText("STOP")
+            pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+            self.btnPause.setPalette(pal)
             self.startThreadReadLine()
         else:
             self.start = 0
             self.btnStartStop.setText("START")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnPause.setPalette(pal)
             try:
                 self.stopThreadReadLine()
             except:
@@ -380,12 +446,22 @@ class MYP2(QMainWindow):
         
               
     def setPause(self):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
         if self.pause ==0 :
             self.pause =1
             self.btnPause.setText("RESUME")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnPause.setPalette(pal)
         else:
             self.pause =0
             self.btnPause.setText("PAUSE")
+            pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+            self.btnPause.setPalette(pal)
         
     def setP2Prog(self):
         if self.P2State  == 1:
@@ -401,7 +477,11 @@ class MYP2(QMainWindow):
             self.btnEnSeqU.setText("Enable Tomo Prg.")
             self.dut.setTomotoP2()
        
-
+    def setCal(self):
+        if self.t1State == 0:
+            self.textEditTerminal.append("Set calibration")
+            self.dut.setCal()
+            self.displayMeas()
                 
             
     def startSourceTaskThreadReadLine(self):  
@@ -488,41 +568,54 @@ class MYP2(QMainWindow):
             
     
     def createTerminalGroupBox(self):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
         self.terminalGroupBox = QtWidgets.QGroupBox("Terminal")
         self.terminalGroupBox.setGeometry(0,0,30,10)
-        palette = self.terminalGroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
-        self.terminalGroupBox.setPalette(palette)
+        self.terminalGroupBox.setPalette(pal)
         mainLayout = QtWidgets.QGridLayout()  
        
         # cmd line
         self.textEditTerminal = QtWidgets.QTextEdit()  
         self.textEditTerminal.setText("")
+        self.textEditTerminal.setPalette(pal)
         
        # mainLayout.setRowStretch(1, 1)
         mainLayout.addWidget(self.textEditTerminal,0, 0,0,0)
-        mainLayout.setRowStretch(0,0)
+        mainLayout.setRowStretch(1,1)
        
         self.terminalGroupBox.setLayout(mainLayout)
     
               
     def createControlGroupBox(self):
+        
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
+        
         self.controlGroupBox = QtWidgets.QGroupBox("Control")
         self.controlGroupBox.setGeometry(0,0,10,10)
         palette = self.controlGroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         self.controlGroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()  
         
         # Com    
         self.listboxCom = QtWidgets.QComboBox()
+        self.listboxCom.setPalette(pal)
          #self.listboxCom.insertItem(0, "/dev/ttyACM0")       
         
         self.lblSuCom = QtWidgets.QLabel() 
         self.lblSuCom.setText("ComPort")     
         palette = self.lblSuCom.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuCom.setPalette(palette)
         
        # mainLayout.addWidget(self.lblSuCom,0, 0)
@@ -530,13 +623,21 @@ class MYP2(QMainWindow):
         
         # Init Comport
         self.btnConnect = QtWidgets.QPushButton("CONNECT")
+        self.btnConnect.setPalette(pal)
         self.btnConnect.setDefault(True)
         mainLayout.addWidget(self.btnConnect,1, 1)
         
           # Refresh listcom
         self.btnComList = QtWidgets.QPushButton("ComPort LIST")
+        self.btnComList.setPalette(pal)
         self.btnComList.setDefault(True)
         mainLayout.addWidget(self.btnComList,0, 0)
+        
+        self.btnCal = QtWidgets.QPushButton("CALIBRATION")
+        self.btnCal.setPalette(pal)
+        self.btnCal.setDefault(True)
+        mainLayout.addWidget(self.btnCal,1,0)
+        
   
         lblTask = QtWidgets.QLabel()
         mainLayout.addWidget(lblTask,3, 0)
@@ -544,6 +645,7 @@ class MYP2(QMainWindow):
          # Seq Unitai Measure
         self.btnEnSeqU = QtWidgets.QPushButton()
         self.btnEnSeqU.setText("Enable")
+        self.btnEnSeqU.setPalette(pal)
         self.btnEnSeqU.setDefault(True)
         mainLayout.addWidget(self.btnEnSeqU,3, 1)
         mainLayout.setRowStretch(2,2)
@@ -551,11 +653,17 @@ class MYP2(QMainWindow):
         self.controlGroupBox.setLayout(mainLayout)
     
     def createCmdGroupBox(self):
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
+        
         self.cmdGroupBox = QtWidgets.QGroupBox()
         self.cmdGroupBox.setGeometry(0,0,300,300)
         
         palette = self.cmdGroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         self.cmdGroupBox.setPalette(palette)
 
         self.stage = PMLINE(name="Etage", delta=1.0)
@@ -564,10 +672,23 @@ class MYP2(QMainWindow):
         self.dir=DIRECTION()
         self.btnStartStop = QtWidgets.QPushButton("START")
         self.btnStartStop.setGeometry(QtCore.QRect(340, 30, 23, 20))
+        pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+        self.btnStartStop.setPalette(pal)
         self.btnStartStop.setDefault(True)
         self.btnPause = QtWidgets.QPushButton("PAUSE")
         self.btnPause.setGeometry(QtCore.QRect(340, 30, 23, 20))
+        pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+        self.btnPause.setPalette(pal)
         self.btnPause.setDefault(True)
+        
+        self.GBZone = QtWidgets.QGroupBox("Zone definition")
+        self.GBZone.setGeometry(0,0,25,100)
+        self.GBZone.setPalette(pal)
+        GBZoneLayout = QtWidgets.QGridLayout()        
+        self.inputboxZone = QtWidgets.QLineEdit()
+        self.inputboxZone.setGeometry(0,0,25,25)
+        GBZoneLayout.addWidget(self.inputboxZone ,0, 0)
+        self.GBZone.setLayout(GBZoneLayout)
 
        
         self.view = ImgDrawer(dimX=135, dimY=72.2)
@@ -579,11 +700,12 @@ class MYP2(QMainWindow):
         oneGroupBox.setGeometry(0,0,300,300)
         oneLayout = QtWidgets.QGridLayout()
         oneLayout.addWidget(self.stage.GroupBox,0, 0)
+        oneLayout.addWidget(self.GBZone,0, 1)
         oneLayout.addWidget(self.xcolumn.GroupBox,0, 3)
         oneLayout.addWidget(self.ycolumn.GroupBox,0, 4)
-        oneLayout.addWidget(self.dir.GroupBox,0, 1)
+        oneLayout.addWidget(self.dir.GroupBox,0, 2)
         oneLayout.setRowStretch(1, 1)
-        oneLayout.setColumnStretch(1, 1)
+        oneLayout.setColumnStretch(2, 2)
         oneGroupBox.setLayout(oneLayout)
         
         secGroupBox = QtWidgets.QGroupBox("")
@@ -591,6 +713,7 @@ class MYP2(QMainWindow):
         secLayout = QtWidgets.QGridLayout()
         secLayout.addWidget(self.btnStartStop,0, 0)
         secLayout.addWidget(self.btnPause,0, 2)
+        secLayout.setColumnStretch(1, 1)
         secGroupBox.setLayout(secLayout)
         
         mainLayout.addWidget(oneGroupBox,0,0)
@@ -608,7 +731,7 @@ class MYP2(QMainWindow):
         self.voltMeterGroupBox.setGeometry(0,0,100,50)
         
         palette = self.voltMeterGroupBox.palette()
-        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
         self.voltMeterGroupBox.setPalette(palette)
 
         self.vm1 = DIGIT("Channel 1")
