@@ -14,6 +14,8 @@ PIXSIZE = 3
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
+XOFFSET = 0
+YOFFSET = 0
 SCALE_FACTOR = 1.25
 
 class ColorLimit(QtWidgets.QWidget):
@@ -214,7 +216,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
  
         
 class  ImgDrawer(QtWidgets.QWidget):
-    def __init__(self, dimX=135, dimY=72.2):
+    def __init__(self, dimX=135.6, dimY=72.8):
         super().__init__()
         
         pal = QPalette()
@@ -231,8 +233,8 @@ class  ImgDrawer(QtWidgets.QWidget):
         # app.setPalette(palette)      
         
         self._path = ""
-        self.dimX = dimX + 0.6
-        self.dimY = dimY + 0.6
+        self.dimX = dimX
+        self.dimY = dimY
         self.initImage()
                
         self.blueLimit = ColorLimit(colorName= "blue", low = -2000.0, high = 2000.0)
@@ -290,8 +292,8 @@ class  ImgDrawer(QtWidgets.QWidget):
     
     def handleCoords(self, point):
         if not point.isNull():
-            x = "{0:.2f}".format((point.x() / self.ratioX)-0.3)
-            y = "{0:.2f}".format((point.y() / self.ratioY)-0.3)
+            x = "{0:.2f}".format((point.x() / self.ratioX)+XOFFSET)
+            y = "{0:.2f}".format((point.y() / self.ratioY)+YOFFSET)
             self.labelCoords.setText(f'x={x}, y={y} (m)')
             #self.labelCoords.setText(f'{point.x()}, {point.y()}')
         else:
@@ -357,10 +359,10 @@ class  ImgDrawer(QtWidgets.QWidget):
         self.rHigh = self.redLimit.getHlimit()
         
     def set(self, x=20, y=20, meas=0.0):
-        x1 = int((x * self.ratioX)) + 0.3
-        x2 = int((x * self.ratioX) + PIXSIZE) + 0.3
-        y1 = int((y * self.ratioY)) + 0.3
-        y2 = int((y * self.ratioY) + PIXSIZE) + 0.3
+        x1 = int((x * self.ratioX) - PIXSIZE/2.0) + XOFFSET
+        x2 = int((x * self.ratioX) + PIXSIZE/2.0) + XOFFSET
+        y1 = int((y * self.ratioY) - PIXSIZE/2.0) + YOFFSET
+        y2 = int((y * self.ratioY) + + PIXSIZE/2.0) + YOFFSET
         transparency = 127    
         self.getLimit()
         if meas > self.bLow and meas < self.bHigh:
@@ -408,13 +410,7 @@ class  ImgDrawer(QtWidgets.QWidget):
                 self.viewer.setPhoto(pixmap)
                # self.reInitImage(self._path)
                 
-                
-                
-        # self.image_qt = QImage(self._path)    
-        # self.viewer.setPhoto(QPixmap.fromImage(self.image_qt.scaled(self.width, self.height, 
-        #                                 Qt.KeepAspectRatio, 
-        #                                 Qt.SmoothTransformation)))
-     
+
    
     def saveImage(self):
         self.rgb_img.save(self._path)     

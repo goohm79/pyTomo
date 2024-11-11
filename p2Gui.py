@@ -20,10 +20,13 @@ from tkinter import filedialog
 import threading
 import datetime
 
-LARGEURCHARIOT = 1.5
-NWHEEL = 6
-ESPACEWHEEL= 0.3
-DISTWHEEL = 0.3
+LARGEURCHARIOT = 1.5  # largeur chariot
+NWHEEL = 6        #nombre de roue
+ESPACEWHEEL= 0.3 #espace entre chacune roue ectrochimique
+DISTWHEEL = 0.3  #diametre roue odometre
+
+AWHEELCOEF = float((ESPACEWHEEL * (NWHEEL-1))) / 2.0      #coeaf A
+
 
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
@@ -202,16 +205,15 @@ class PMLINE(QtWidgets.QWidget):
     
     def btnP(self):
         self.value = self.getVal() + self.delta 
-        self.setVal(self.value)
+        self.setVal(str(self.value))
         
     def btnM(self):
         self.value = self.getVal() - self.delta 
-        self.setVal(self.value)
+        self.setVal(str(self.value))
         
     def setVal(self, val):
         self.value = val
-        self.inputbox.setText(str("{0:.2f}".format(self.value)))
-        self.value = float(self.inputbox.text())
+        self.inputbox.setText(str(self.value))
         
     def getVal(self):
         self.value = float(self.inputbox.text())
@@ -307,8 +309,10 @@ class MYP2(QMainWindow):
                 self.logDateTime = datetime.datetime.now()
                 self.logFileName = "log_stage-" + str(self.stage.getVal()) + "_zone-" + self.inputboxZone.text() + "_date-" + str(self.logDateTime)
                 file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
+                self.logFileName = file[0]
                 self.view.initImage(self.logFileName + ".png")
-                self.logFileName = file
+                
+                
                 self.ExtractLogFileName = file[0]
                 if not os.path.exists(self.ExtractLogFileName):
                     self.ExtractLogFile = open(self.ExtractLogFileName, "w")
@@ -357,36 +361,36 @@ class MYP2(QMainWindow):
                             self.xcolumn.setVal("{0:.2f}".format(self.x))  
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-2.5)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
+                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-AWHEELCOEF)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
                                     self.ExtractLogFile.writelines(fileStr)  
-                                    self.view.set(float(self.x), float(self.y + ((i-2.5)*self.WheelDist)), float(tabDatas[i+1]))
+                                    self.view.set(float(self.x), float(self.y + ((i-AWHEELCOEF)*self.WheelDist)), float(tabDatas[i+1]))
                                 
                         elif self.dir.direction == "right":
                             self.x = self.x + self.wheelSize
                             self.xcolumn.setVal("{0:.2f}".format(self.x))  
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((6-i)-2.5)*self.WheelDist))) + ";" + tabDatas[6-i]   + "\r" 
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((NWHEEL-i)-AWHEELCOEF)*self.WheelDist))) + ";" + tabDatas[NWHEEL-i]   + "\r" 
                                     self.ExtractLogFile.writelines(fileStr)   
-                                    self.view.set(float(self.x), float(self.y + (((6-i)-2.5)*self.WheelDist)), float(tabDatas[6-i]))
+                                    self.view.set(float(self.x), float(self.y + (((NWHEEL-i)-AWHEELCOEF)*self.WheelDist)), float(tabDatas[6-i]))
                                            
                         elif self.dir.direction == "down":
                             self.y = self.y + self.wheelSize
                             self.ycolumn.setVal("{0:.2f}".format(self.y))
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-AWHEELCOEF)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
                                     self.ExtractLogFile.writelines(fileStr)
-                                    self.view.set(float(self.x + ((i-2.5)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
+                                    self.view.set(float(self.x + ((i-AWHEELCOEF)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
                                              
                         elif self.dir.direction == "up":
                             self.y = self.y - self.wheelSize
                             self.ycolumn.setVal("{0:.2f}".format(self.y))
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-2.5)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[6-i]  + "\r"   
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-AWHEELCOEF)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[NWHEEL-i]  + "\r"   
                                     self.ExtractLogFile.writelines(fileStr)   
-                                    self.view.set( float(self.x + (((6-i)-2.5)*self.WheelDist)), float(self.y), float(tabDatas[6-i]))
+                                    self.view.set( float(self.x + (((NWHEEL-i)-AWHEELCOEF)*self.WheelDist)), float(self.y), float(tabDatas[NWHEEL-i]))
                                      
                         self.ExtractLogFile.close()  
                         self.vm1.lcd.display(float(tabDatas[1]))
@@ -423,13 +427,13 @@ class MYP2(QMainWindow):
             self.start =1
             self.btnStartStop.setText("STOP")
             pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
-            self.btnPause.setPalette(pal)
+            self.btnStartStop.setPalette(pal)
             self.startThreadReadLine()
         else:
             self.start = 0
             self.btnStartStop.setText("START")
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
-            self.btnPause.setPalette(pal)
+            self.btnStartStop.setPalette(pal)
             try:
                 self.stopThreadReadLine()
             except:
