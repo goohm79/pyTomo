@@ -54,8 +54,7 @@ class DIRECTION(QtWidgets.QWidget):
         self.b1.setPalette(pal)
         
         self.b2 = QtWidgets.QRadioButton("UP ⬆️")
-        self.b2.setChecked(True)
-        self.direction = "up"
+        
         self.b2.toggled.connect(lambda:self.setDir("up"))
         self.b2.setStyleSheet("QRadioButton::indicator::checked"
                                         "{"
@@ -64,6 +63,8 @@ class DIRECTION(QtWidgets.QWidget):
         self.b2.setPalette(pal)
             
         self.b3 = QtWidgets.QRadioButton("⬇️ DOWN ")
+        self.direction = "down"
+        self.b3.setChecked(True)
         self.b3.toggled.connect(lambda:self.setDir("down"))
         self.b3.setStyleSheet("QRadioButton::indicator::checked"
                                         "{"
@@ -356,41 +357,45 @@ class MYP2(QMainWindow):
                         tabDatas = ExtStrLine[:-2].split(';')
                         fileStr = ""
                         self.ExtractLogFile = open(self.ExtractLogFileName, "a")
-                        if self.dir.direction == "left":
-                            self.x = self.x - self.wheelSize
-                            self.xcolumn.setVal("{0:.2f}".format(self.x))  
-                            for i in range(NWHEEL):
-                                if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + ((i-AWHEELCOEF)*self.WheelDist))) + ";" + tabDatas[i+1]   + "\r" 
-                                    self.ExtractLogFile.writelines(fileStr)  
-                                    self.view.set(float(self.x), float(self.y + ((i-AWHEELCOEF)*self.WheelDist)), float(tabDatas[i+1]))
-                                
-                        elif self.dir.direction == "right":
+                        if self.dir.direction == "right":
                             self.x = self.x + self.wheelSize
                             self.xcolumn.setVal("{0:.2f}".format(self.x))  
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(self.y + (((NWHEEL-i)-AWHEELCOEF)*self.WheelDist))) + ";" + tabDatas[NWHEEL-i]   + "\r" 
-                                    self.ExtractLogFile.writelines(fileStr)   
-                                    self.view.set(float(self.x), float(self.y + (((NWHEEL-i)-AWHEELCOEF)*self.WheelDist)), float(tabDatas[6-i]))
-                                           
-                        elif self.dir.direction == "down":
-                            self.y = self.y + self.wheelSize
-                            self.ycolumn.setVal("{0:.2f}".format(self.y))
+                                    yWheel = self.y + (i*self.WheelDist)-AWHEELCOEF
+                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[i+1]   + "\r" 
+                                    self.ExtractLogFile.writelines(fileStr)  
+                                    self.view.set(float(self.x), float(yWheel), float(tabDatas[i+1]))
+                                
+                        elif self.dir.direction == "left":
+                            self.x = self.x - self.wheelSize
+                            self.xcolumn.setVal("{0:.2f}".format(self.x))  
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + ((i-AWHEELCOEF)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
-                                    self.ExtractLogFile.writelines(fileStr)
-                                    self.view.set(float(self.x + ((i-AWHEELCOEF)*self.WheelDist)), float(self.y), float(tabDatas[i+1]))
-                                             
+                                    yWheel = self.y + (((NWHEEL-1-i)*self.WheelDist)-AWHEELCOEF)
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[NWHEEL-i]   + "\r" 
+                                    self.ExtractLogFile.writelines(fileStr)   
+                                    self.view.set(float(self.x), float(yWheel), float(tabDatas[NWHEEL-i]))
+                                           
                         elif self.dir.direction == "up":
                             self.y = self.y - self.wheelSize
                             self.ycolumn.setVal("{0:.2f}".format(self.y))
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(self.x + (((6-i)-AWHEELCOEF)*self.WheelDist))) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[NWHEEL-i]  + "\r"   
+                                    xWheel = self.x + (i*self.WheelDist)-AWHEELCOEF
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
+                                    self.ExtractLogFile.writelines(fileStr)
+                                    self.view.set(float(xWheel), float(self.y), float(tabDatas[i+1]))
+                                             
+                        elif self.dir.direction == "down":
+                            self.y = self.y + self.wheelSize
+                            self.ycolumn.setVal("{0:.2f}".format(self.y))
+                            for i in range(NWHEEL):
+                                if self.ActiveWheel[i] == True:
+                                    xWheel = self.x + (((NWHEEL-1-i)*self.WheelDist)-AWHEELCOEF)
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[NWHEEL-i]  + "\r"   
                                     self.ExtractLogFile.writelines(fileStr)   
-                                    self.view.set( float(self.x + (((NWHEEL-i)-AWHEELCOEF)*self.WheelDist)), float(self.y), float(tabDatas[NWHEEL-i]))
+                                    self.view.set( float(xWheel), float(self.y), float(tabDatas[NWHEEL-i]))
                                      
                         self.ExtractLogFile.close()  
                         self.vm1.lcd.display(float(tabDatas[1]))
@@ -695,7 +700,7 @@ class MYP2(QMainWindow):
         self.GBZone.setLayout(GBZoneLayout)
 
        
-        self.view = ImgDrawer(dimX=135, dimY=72.2)
+        self.view = ImgDrawer()
         self.view.resize(1000, 600) 
         
         mainLayout = QtWidgets.QGridLayout()

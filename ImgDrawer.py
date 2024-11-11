@@ -13,9 +13,11 @@ PATH = '/home/goo/Images/'
 PIXSIZE = 3   
 
 from PySide6 import QtCore, QtGui, QtWidgets
+XCOORDOFFSET= -0.37
+YCOORDOFFSET= -0.4
 
-XOFFSET = 0
-YOFFSET = 0
+XOFFSET = 0.37
+YOFFSET = 0.4
 SCALE_FACTOR = 1.25
 
 class ColorLimit(QtWidgets.QWidget):
@@ -216,7 +218,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
  
         
 class  ImgDrawer(QtWidgets.QWidget):
-    def __init__(self, dimX=135.6, dimY=72.8):
+    def __init__(self, dimX=135.7, dimY=72.9):
         super().__init__()
         
         pal = QPalette()
@@ -256,9 +258,7 @@ class  ImgDrawer(QtWidgets.QWidget):
         palette = self.labelCoords.palette()
         palette.setColor(palette.WindowText, QtGui.QColor(254,254,254))
         self.labelCoords.setPalette(palette)
-        
-        
-        
+       
         self.buttonOpen = QtWidgets.QPushButton(self)
         self.buttonOpen.setText('Open Image')
         self.buttonOpen.setPalette(pal)
@@ -292,8 +292,8 @@ class  ImgDrawer(QtWidgets.QWidget):
     
     def handleCoords(self, point):
         if not point.isNull():
-            x = "{0:.2f}".format((point.x() / self.ratioX)+XOFFSET)
-            y = "{0:.2f}".format((point.y() / self.ratioY)+YOFFSET)
+            x = "{0:.2f}".format((point.x() / self.ratioX)+ XCOORDOFFSET)
+            y = "{0:.2f}".format((point.y() / self.ratioY)+ YCOORDOFFSET)
             self.labelCoords.setText(f'x={x}, y={y} (m)')
             #self.labelCoords.setText(f'{point.x()}, {point.y()}')
         else:
@@ -359,10 +359,10 @@ class  ImgDrawer(QtWidgets.QWidget):
         self.rHigh = self.redLimit.getHlimit()
         
     def set(self, x=20, y=20, meas=0.0):
-        x1 = int((x * self.ratioX) - PIXSIZE/2.0) + XOFFSET
-        x2 = int((x * self.ratioX) + PIXSIZE/2.0) + XOFFSET
-        y1 = int((y * self.ratioY) - PIXSIZE/2.0) + YOFFSET
-        y2 = int((y * self.ratioY) + + PIXSIZE/2.0) + YOFFSET
+        x1 = int(((x+XOFFSET) * self.ratioX) - PIXSIZE/2.0)
+        x2 = int(((x+XOFFSET) * self.ratioX) + PIXSIZE/2.0)
+        y1 = int(((y+YOFFSET)* self.ratioY) - PIXSIZE/2.0) 
+        y2 = int(((y+YOFFSET) * self.ratioY) + + PIXSIZE/2.0)
         transparency = 127    
         self.getLimit()
         if meas > self.bLow and meas < self.bHigh:
@@ -381,24 +381,25 @@ class  ImgDrawer(QtWidgets.QWidget):
      
     def initImage(self, _destPath = PATH + 'rgb_image.png'):  
         self.img = Image.open(PATH + 'P2.png')
-        self.width = self.img.width
-        self.height = self.img.height           
-        self.ratioX =  self.width /  self.dimX 
-        self.ratioY =  self.height /  self.dimY
+        
         # gray_img = self.img.convert('L')
         # gray_img.save(PATH + 'goo_gray.png')                
         self.rgb_img = self.img.convert('RGB')
         self._path = _destPath
         self.rgb_img.save(self._path)
+        self.width = self.rgb_img.width
+        self.height = self.rgb_img.height           
+        self.ratioX =  self.width /  self.dimX 
+        self.ratioY =  self.height /  self.dimY
         self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")
      
     def reInitImage(self, _path = PATH + 'P2.png'):  
         self.img = Image.open(_path)
-        self.width = self.img.width
-        self.height = self.img.height           
-        self.ratioX =  self.width /  self.dimX 
-        self.ratioY =  self.height /  self.dimY     
         self.rgb_img = self.img.convert('RGB')
+        self.width = self.rgb_img.width
+        self.height = self.rgb_img.height           
+        self.ratioX =  self.width /  self.dimX 
+        self.ratioY =  self.height /  self.dimY 
         self._path = _path
         self.rgb_img.save(self._path)
         self.draw = ImageDraw.Draw(self.rgb_img, "RGBA")   
@@ -418,7 +419,7 @@ class  ImgDrawer(QtWidgets.QWidget):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
-    img = ImgDrawer(dimX=135, dimY=72.2)
+    img = ImgDrawer(dimX=135.6, dimY=72.2)
     img.resize(2000, 1000)
     img.show()
     
