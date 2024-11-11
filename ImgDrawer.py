@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QPalette, QBrush, QPen, QColor, QPainter, QPixmap, QImage
 from PySide6.QtOpenGL import *
 
-PATH = '/home/goo/Images/'
+PATH = './img/'
 PIXSIZE = 3   
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -36,7 +36,7 @@ class ColorLimit(QtWidgets.QWidget):
         self.GroupBox = QtWidgets.QGroupBox()
         self.GroupBox.setGeometry(0,0,25,25)
         palette = self.GroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.GroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()
@@ -46,7 +46,7 @@ class ColorLimit(QtWidgets.QWidget):
         self.lbl.setGeometry(0,0,25,25)
         palette = self.lbl.palette()
         r,g,b = ImageColor.getrgb(self.colorName)
-        palette.setColor(palette.WindowText, QtGui.QColor(r, g, b))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(r, g, b))
         self.lbl.setPalette(palette)
         
         self.lLimitInputbox = QtWidgets.QLineEdit()
@@ -256,7 +256,7 @@ class  ImgDrawer(QtWidgets.QWidget):
             QtCore.Qt.AlignmentFlag.AlignRight |
             QtCore.Qt.AlignmentFlag.AlignCenter)
         palette = self.labelCoords.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(254,254,254))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(254,254,254))
         self.labelCoords.setPalette(palette)
        
         self.buttonOpen = QtWidgets.QPushButton(self)

@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QBrush, QPen, QColor, QPainter
 
 import os.path
-from tkinter import filedialog
+
 import threading
 import datetime
 
@@ -41,7 +41,7 @@ class DIRECTION(QtWidgets.QWidget):
         self.GroupBox.setGeometry(0,0,100,100)
             
         palette = self.GroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         
         
     
@@ -149,10 +149,11 @@ class DIGIT(QtWidgets.QWidget):
         self.GroupBox.setLayout(mainLayout)
     
     def checkState(self):
-        if self.check.checkState() == False:
-            return False
-        else:
+        print(str(self.check.checkState()))
+        if self.check.isChecked():
             return True
+        else:
+            return False
     
 class PMLINE(QtWidgets.QWidget):
     def __init__(self, name = "", delta = 1.0):
@@ -272,7 +273,7 @@ class MYP2(QMainWindow):
         oneGroupBox = QtWidgets.QGroupBox("")
         oneGroupBox.setGeometry(0,0,30,30)
         palette = oneGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         oneGroupBox.setPalette(palette)
         oneLayout.addWidget(self.controlGroupBox,0, 0)
         oneLayout.addWidget(self.terminalGroupBox,0,1)
@@ -623,7 +624,7 @@ class MYP2(QMainWindow):
         self.controlGroupBox = QtWidgets.QGroupBox("Control")
         self.controlGroupBox.setGeometry(0,0,10,10)
         palette = self.controlGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.controlGroupBox.setPalette(palette)
         
         mainLayout = QtWidgets.QGridLayout()  
@@ -636,7 +637,7 @@ class MYP2(QMainWindow):
         self.lblSuCom = QtWidgets.QLabel() 
         self.lblSuCom.setText("ComPort")     
         palette = self.lblSuCom.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))
         self.lblSuCom.setPalette(palette)
         
        # mainLayout.addWidget(self.lblSuCom,0, 0)
@@ -689,7 +690,7 @@ class MYP2(QMainWindow):
         self.cmdGroupBox.setGeometry(0,0,300,300)
         
         palette = self.cmdGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.cmdGroupBox.setPalette(palette)
 
         self.stage = PMLINE(name="Etage", delta=1.0)
@@ -757,7 +758,7 @@ class MYP2(QMainWindow):
         self.voltMeterGroupBox.setGeometry(0,0,100,50)
         
         palette = self.voltMeterGroupBox.palette()
-        palette.setColor(palette.WindowText, QtGui.QColor(103, 113, 121))     
+        palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.voltMeterGroupBox.setPalette(palette)
 
         self.vm1 = DIGIT("Channel 1")
