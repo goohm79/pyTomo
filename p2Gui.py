@@ -99,6 +99,12 @@ class DIGIT(QtWidgets.QWidget):
     def __init__(self, name = ""):
         self.name = name
         
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        
         self.GroupBox = QtWidgets.QGroupBox("")
         self.GroupBox.setGeometry(0,0,30,30)
         
@@ -131,15 +137,8 @@ class DIGIT(QtWidgets.QWidget):
         self.lcd.display(0)
         
         self.check = QtWidgets.QCheckBox()
-        self.check.setChecked(True) 
-        palette = self.check.palette()
-        # foreground color
-        palette.setColor(palette.WindowText, QtGui.QColor(49, 140, 231))
-        # background color
-        palette.setColor(QPalette.Light, QtGui.QColor(53, 53, 53))  # "light" border
-        palette.setColor(QPalette.Dark, QtGui.QColor(53, 53, 53)) # "dark" border
-        
-        self.check.setPalette(palette)    
+        self.check.setChecked(True)
+        self.check.setPalette(pal)  
         
         mainLayout = QtWidgets.QGridLayout()
         
@@ -206,15 +205,15 @@ class PMLINE(QtWidgets.QWidget):
     
     def btnP(self):
         self.value = self.getVal() + self.delta 
-        self.setVal(str(self.value))
+        self.setVal(self.value)
         
     def btnM(self):
         self.value = self.getVal() - self.delta 
-        self.setVal(str(self.value))
+        self.setVal(self.value)
         
     def setVal(self, val):
         self.value = val
-        self.inputbox.setText(str(self.value))
+        self.inputbox.setText("{0:.2f}".format(self.value))
         
     def getVal(self):
         self.value = float(self.inputbox.text())
@@ -359,43 +358,47 @@ class MYP2(QMainWindow):
                         self.ExtractLogFile = open(self.ExtractLogFileName, "a")
                         if self.dir.direction == "right":
                             self.x = self.x + self.wheelSize
-                            self.xcolumn.setVal("{0:.2f}".format(self.x))  
+                            self.xcolumn.setVal(self.x)  
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
                                     yWheel = self.y + (i*self.WheelDist)-AWHEELCOEF
-                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[i+1]   + "\r" 
+                                    n = i+1
+                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[n]   + "\r" 
                                     self.ExtractLogFile.writelines(fileStr)  
-                                    self.view.set(float(self.x), float(yWheel), float(tabDatas[i+1]))
+                                    self.view.set(float(self.x), float(yWheel), float(tabDatas[n]))
                                 
                         elif self.dir.direction == "left":
                             self.x = self.x - self.wheelSize
-                            self.xcolumn.setVal("{0:.2f}".format(self.x))  
+                            self.xcolumn.setVal(self.x)  
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
                                     yWheel = self.y + (((NWHEEL-1-i)*self.WheelDist)-AWHEELCOEF)
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[NWHEEL-i]   + "\r" 
+                                    n = i+1
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[n]   + "\r" 
                                     self.ExtractLogFile.writelines(fileStr)   
-                                    self.view.set(float(self.x), float(yWheel), float(tabDatas[NWHEEL-i]))
+                                    self.view.set(float(self.x), float(yWheel), float(tabDatas[n]))
                                            
                         elif self.dir.direction == "up":
                             self.y = self.y - self.wheelSize
-                            self.ycolumn.setVal("{0:.2f}".format(self.y))
+                            self.ycolumn.setVal(self.y)
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
                                     xWheel = self.x + (i*self.WheelDist)-AWHEELCOEF
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[i+1] + "\r"  
+                                    n = i+1
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[n] + "\r"  
                                     self.ExtractLogFile.writelines(fileStr)
-                                    self.view.set(float(xWheel), float(self.y), float(tabDatas[i+1]))
+                                    self.view.set(float(xWheel), float(self.y), float(tabDatas[n]))
                                              
                         elif self.dir.direction == "down":
                             self.y = self.y + self.wheelSize
-                            self.ycolumn.setVal("{0:.2f}".format(self.y))
+                            self.ycolumn.setVal(self.y)
                             for i in range(NWHEEL):
                                 if self.ActiveWheel[i] == True:
                                     xWheel = self.x + (((NWHEEL-1-i)*self.WheelDist)-AWHEELCOEF)
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[NWHEEL-i]  + "\r"   
+                                    n = i+1
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[n]  + "\r"   
                                     self.ExtractLogFile.writelines(fileStr)   
-                                    self.view.set( float(xWheel), float(self.y), float(tabDatas[NWHEEL-i]))
+                                    self.view.set( float(xWheel), float(self.y), float(tabDatas[n]))
                                      
                         self.ExtractLogFile.close()  
                         self.vm1.lcd.display(float(tabDatas[1]))
@@ -521,10 +524,17 @@ class MYP2(QMainWindow):
                 print(ExtStrLine)
 
     def initDut(self):   
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
         if self.initState == 0:
             portCOM = str(self.listboxCom.currentText())
             self.dut = TOMO1S12V2I(comPort=portCOM)
             self.btnConnect.setText("Disconnect")
+            pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+            self.btnConnect.setPalette(pal)
             self.textEditTerminal.setText("Connected to: " + portCOM)
             self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
             self.textEditTerminal.append("Set power On")
@@ -545,6 +555,8 @@ class MYP2(QMainWindow):
             del self.dut
             self.initState = 0
             self.btnConnect.setText("CONNECT")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnConnect.setPalette(pal)
             self.textEditTerminal.setText("COM PORT disconnected")
             
         
@@ -630,11 +642,8 @@ class MYP2(QMainWindow):
        # mainLayout.addWidget(self.lblSuCom,0, 0)
         mainLayout.addWidget(self.listboxCom,0, 1)
         
-        # Init Comport
-        self.btnConnect = QtWidgets.QPushButton("CONNECT")
-        self.btnConnect.setPalette(pal)
-        self.btnConnect.setDefault(True)
-        mainLayout.addWidget(self.btnConnect,1, 1)
+        
+        
         
           # Refresh listcom
         self.btnComList = QtWidgets.QPushButton("ComPort LIST")
@@ -656,6 +665,14 @@ class MYP2(QMainWindow):
         self.btnEnSeqU.setText("Enable")
         self.btnEnSeqU.setPalette(pal)
         self.btnEnSeqU.setDefault(True)
+        
+        # Init Comport
+        self.btnConnect = QtWidgets.QPushButton("CONNECT")
+        self.btnConnect.setDefault(True)
+        pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+        self.btnConnect.setPalette(pal)
+        mainLayout.addWidget(self.btnConnect,1, 1)
+        
         mainLayout.addWidget(self.btnEnSeqU,3, 1)
         mainLayout.setRowStretch(2,2)
         mainLayout.setColumnStretch(0, 1)
@@ -676,8 +693,8 @@ class MYP2(QMainWindow):
         self.cmdGroupBox.setPalette(palette)
 
         self.stage = PMLINE(name="Etage", delta=1.0)
-        self.xcolumn = PMLINE(name="Position: X (m)",delta=LARGEURCHARIOT)
-        self.ycolumn = PMLINE(name="& Y (m)", delta=LARGEURCHARIOT)
+        self.xcolumn = PMLINE(name="Position: X (m)",delta=NWHEEL*ESPACEWHEEL)
+        self.ycolumn = PMLINE(name="& Y (m)", delta=NWHEEL*ESPACEWHEEL)
         self.dir=DIRECTION()
         self.btnStartStop = QtWidgets.QPushButton("START")
         self.btnStartStop.setGeometry(QtCore.QRect(340, 30, 23, 20))
