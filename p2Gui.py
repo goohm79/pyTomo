@@ -20,22 +20,20 @@ import os.path
 import threading
 import datetime
 
-LARGEURCHARIOT = 1.5  # largeur chariot
+LARGEURCHARIOT = 1.4  # largeur chariot
 NWHEEL = 6        #nombre de roue
-ESPACEWHEEL= 0.3 #espace entre chacune roue ectrochimique
-DISTWHEEL = 0.3  #diametre roue odometre
+ESPACEWHEEL= 0.2 #espace entre chacune roue ectrochimique  en metre
+DISTWHEEL = 0.628  #périmètre roue odometre en metre
 
 AWHEELCOEF = float((ESPACEWHEEL * (NWHEEL-1))) / 2.0      #coeaf A
 
+pal = QPalette()
+pal.setColor(QPalette.Base, QColor(60, 60, 60))
+pal.setColor(QPalette.Button, QColor(60, 60, 60))
+pal.setColor(QPalette.Text, QColor(255, 255, 255))
 
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
-        
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor(60, 60, 60))
-        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
-        pal.setColor(QPalette.Button, QColor(60, 60, 60))
-        pal.setColor(QPalette.Text, QColor(255, 255, 255))
         
         self.GroupBox = QtWidgets.QGroupBox("Direction")
         self.GroupBox.setGeometry(0,0,100,100)
@@ -98,12 +96,6 @@ class DIRECTION(QtWidgets.QWidget):
 class DIGIT(QtWidgets.QWidget):
     def __init__(self, name = ""):
         self.name = name
-        
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor(60, 60, 60))
-        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
-        pal.setColor(QPalette.Button, QColor(60, 60, 60))
-        pal.setColor(QPalette.Text, QColor(255, 255, 255))
         
         self.GroupBox = QtWidgets.QGroupBox("")
         self.GroupBox.setGeometry(0,0,30,30)
@@ -237,7 +229,7 @@ class Worker(QObject):
 class MYP2(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('P2')
+        self.setWindowTitle('p2GUI.py')
          # Now use a palette to switch to dark colors:
         app.setStyle("Fusion")
         palette = QPalette()
@@ -257,6 +249,8 @@ class MYP2(QMainWindow):
         pixmap =QtGui.QPixmap('logo.png')
         self.lbllogo = QtWidgets.QLabel() 
         self.lbllogo.setPixmap(pixmap)
+        
+        
         
         self.initState = 0  
         self.t1State = 0
@@ -279,7 +273,7 @@ class MYP2(QMainWindow):
         oneLayout.addWidget(self.terminalGroupBox,0,1)
         oneLayout.addWidget(self.voltMeterGroupBox,0,2)
         oneLayout.addWidget(self.lbllogo,0,3)
-        oneLayout.setRowStretch(1,1)
+        oneLayout.setRowStretch(0,0)
         oneLayout.setColumnStretch(1, 1)  
         oneGroupBox.setLayout(oneLayout)
         
@@ -296,6 +290,7 @@ class MYP2(QMainWindow):
         self.connect(self.btnStartStop, SIGNAL("clicked()"),self.setStartStop)
         self.connect(self.btnPause, SIGNAL("clicked()"),self.setPause)    
         self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)
+        #self.connect(self.btnMeas, SIGNAL("clicked()"),self.displayMeas)
         self.listPortCom()
         #self.setCentralWidget(oneGroupBox)
         
@@ -311,9 +306,8 @@ class MYP2(QMainWindow):
                 self.logFileName = "log_stage-" + str(self.stage.getVal()) + "_zone-" + self.inputboxZone.text() + "_date-" + str(self.logDateTime)
                 file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
                 self.logFileName = file[0]
-                self.view.initImage(self.logFileName + ".png")
-                
-                
+                #self.view.initImage(self.logFileName + ".png")
+  
                 self.ExtractLogFileName = file[0]
                 if not os.path.exists(self.ExtractLogFileName):
                     self.ExtractLogFile = open(self.ExtractLogFileName, "w")
@@ -337,7 +331,10 @@ class MYP2(QMainWindow):
     def stopThreadReadLine(self):
         try: 
             self.timer.stop()
-            self.ExtractLogFile.close()  
+            try:
+                self.ExtractLogFile.close()  
+            except:
+                None
             self.t1State=0
             self.t1.join()
             self.dut.stopP2()
@@ -495,7 +492,6 @@ class MYP2(QMainWindow):
             self.textEditTerminal.append("Set calibration")
             self.dut.setCal()
             self.displayMeas()
-                
             
     def startSourceTaskThreadReadLine(self):  
         if self.initState == 1:
@@ -530,7 +526,7 @@ class MYP2(QMainWindow):
         pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
         pal.setColor(QPalette.Button, QColor(60, 60, 60))
         pal.setColor(QPalette.Text, QColor(255, 255, 255))
-        if self.initState == 0:
+        if self.initState == 0 and self.t1State == 0:
             portCOM = str(self.listboxCom.currentText())
             self.dut = TOMO1S12V2I(comPort=portCOM)
             self.btnConnect.setText("Disconnect")
@@ -590,11 +586,6 @@ class MYP2(QMainWindow):
             
     
     def createTerminalGroupBox(self):
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor(60, 60, 60))
-        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
-        pal.setColor(QPalette.Button, QColor(60, 60, 60))
-        pal.setColor(QPalette.Text, QColor(255, 255, 255))
         
         self.terminalGroupBox = QtWidgets.QGroupBox("Terminal")
         self.terminalGroupBox.setGeometry(0,0,30,10)
@@ -614,21 +605,13 @@ class MYP2(QMainWindow):
     
               
     def createControlGroupBox(self):
-        
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor(60, 60, 60))
-        pal.setColor(QPalette.Button, QColor(60, 60, 60))
-        pal.setColor(QPalette.Text, QColor(255, 255, 255))
-        
-        
         self.controlGroupBox = QtWidgets.QGroupBox("Control")
         self.controlGroupBox.setGeometry(0,0,10,10)
         palette = self.controlGroupBox.palette()
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
-        self.controlGroupBox.setPalette(palette)
-        
+        self.controlGroupBox.setPalette(palette)    
         mainLayout = QtWidgets.QGridLayout()  
-        
+      
         # Com    
         self.listboxCom = QtWidgets.QComboBox()
         self.listboxCom.setPalette(pal)
@@ -642,10 +625,7 @@ class MYP2(QMainWindow):
         
        # mainLayout.addWidget(self.lblSuCom,0, 0)
         mainLayout.addWidget(self.listboxCom,0, 1)
-        
-        
-        
-        
+
           # Refresh listcom
         self.btnComList = QtWidgets.QPushButton("ComPort LIST")
         self.btnComList.setPalette(pal)
@@ -655,9 +635,13 @@ class MYP2(QMainWindow):
         self.btnCal = QtWidgets.QPushButton("CALIBRATION")
         self.btnCal.setPalette(pal)
         self.btnCal.setDefault(True)
-        mainLayout.addWidget(self.btnCal,1,0)
+        mainLayout.addWidget(self.btnCal,2,0)
         
-  
+        # self.btnMeas = QtWidgets.QPushButton("Get MEASURE")
+        # self.btnMeas.setDefault(True)
+        # self.btnMeas.setPalette(pal)
+        # mainLayout.addWidget(self.btnMeas,2, 1)
+
         lblTask = QtWidgets.QLabel()
         mainLayout.addWidget(lblTask,3, 0)
         lblTask.setText("Switch Tomo1S12V2I to P2")
@@ -680,12 +664,9 @@ class MYP2(QMainWindow):
         self.controlGroupBox.setLayout(mainLayout)
     
     def createCmdGroupBox(self):
-        pal = QPalette()
-        pal.setColor(QPalette.Base, QColor(60, 60, 60))
-        pal.setColor(QPalette.Button, QColor(60, 60, 60))
-        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+       
         
-        
+        pal2 = pal
         self.cmdGroupBox = QtWidgets.QGroupBox()
         self.cmdGroupBox.setGeometry(0,0,300,300)
         
@@ -699,13 +680,13 @@ class MYP2(QMainWindow):
         self.dir=DIRECTION()
         self.btnStartStop = QtWidgets.QPushButton("START")
         self.btnStartStop.setGeometry(QtCore.QRect(340, 30, 23, 20))
-        pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+        pal2.setColor(QPalette.ButtonText, QColor(0, 255, 0))
         self.btnStartStop.setPalette(pal)
         self.btnStartStop.setDefault(True)
         self.btnPause = QtWidgets.QPushButton("PAUSE")
         self.btnPause.setGeometry(QtCore.QRect(340, 30, 23, 20))
-        pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
-        self.btnPause.setPalette(pal)
+        pal2.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+        self.btnPause.setPalette(pal2)
         self.btnPause.setDefault(True)
         
         self.GBZone = QtWidgets.QGroupBox("Zone definition")
@@ -717,6 +698,10 @@ class MYP2(QMainWindow):
         GBZoneLayout.addWidget(self.inputboxZone ,0, 0)
         self.GBZone.setLayout(GBZoneLayout)
 
+        self.lblGoOhm = QtWidgets.QLabel() 
+        self.lblGoOhm.setText("design by GoOHM")     
+        self.lblGoOhm.setGeometry(0,0,25,25)
+        self.lblGoOhm.setPalette(pal)
        
         self.view = ImgDrawer()
         self.view.resize(1000, 600) 
@@ -739,8 +724,10 @@ class MYP2(QMainWindow):
         secGroupBox.setGeometry(0,0,300,300)
         secLayout = QtWidgets.QGridLayout()
         secLayout.addWidget(self.btnStartStop,0, 0)
-        secLayout.addWidget(self.btnPause,0, 2)
-        secLayout.setColumnStretch(1, 1)
+        secLayout.addWidget(self.btnPause,0, 2)  
+        secLayout.addWidget(self.lblGoOhm,1, 2)
+        secLayout.setRowStretch(0,0)       
+        secLayout.setColumnStretch(1,1)
         secGroupBox.setLayout(secLayout)
         
         mainLayout.addWidget(oneGroupBox,0,0)

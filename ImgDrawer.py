@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QPalette, QBrush, QPen, QColor, QPainter, QPixmap, QImage
 from PySide6.QtOpenGL import *
 
-PATH = './img/'
+PATH = '/home/goohm/github/pyTomo/img/'
 PIXSIZE = 3   
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -86,6 +86,8 @@ class ColorLimit(QtWidgets.QWidget):
 
 class PhotoViewer(QtWidgets.QGraphicsView):
     coordinatesChanged = QtCore.Signal(QtCore.QPoint)
+    keyPressed = QtCore.Signal(QtCore.QEvent)
+
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -108,6 +110,19 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(30, 30, 30)))
         self.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        self.keyPressed.connect(self.on_key)
+
+    def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+        #self.on_key(event)
+        self.keyPressed.emit(event) 
+
+    def on_key(self, event):
+        if event.key() == QtCore.Qt.Key_PageUp:
+            self.zoom(1)  
+        elif event.key() == QtCore.Qt.Key_PageDown:
+            self.zoom(-1) 
+
 
     def hasPhoto(self):
         return not self._empty
