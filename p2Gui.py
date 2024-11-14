@@ -24,6 +24,7 @@ LARGEURCHARIOT = 1.4  # largeur chariot
 NWHEEL = 6        #nombre de roue
 ESPACEWHEEL= 0.2 #espace entre chacune roue ectrochimique  en metre
 DISTWHEEL = 0.628  #périmètre roue odometre en metre
+VITESSEMAX = 3.5
 
 AWHEELCOEF = float((ESPACEWHEEL * (NWHEEL-1))) / 2.0      #coeaf A
 
@@ -31,6 +32,15 @@ pal = QPalette()
 pal.setColor(QPalette.Base, QColor(60, 60, 60))
 pal.setColor(QPalette.Button, QColor(60, 60, 60))
 pal.setColor(QPalette.Text, QColor(255, 255, 255))
+pal.setColor(QPalette.WindowText, QColor(255, 255, 255))
+
+palRed = QPalette()
+palRed.setColor(QPalette.Base, QColor(60, 60, 60))
+palRed.setColor(QPalette.Button, QColor(60, 60, 60))
+palRed.setColor(QPalette.Text, QColor(255, 0, 0))
+palRed.setColor(QPalette.WindowText, QColor(255, 0, 0))
+
+
 
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
@@ -341,12 +351,24 @@ class MYP2(QMainWindow):
         except:
             NONE
                
-    def printThreadReadLine(self):      
+    def printThreadReadLine(self): 
+        self.t1 = time.time()
+        self.t2 = time.time()     
         while(self.t1State==1):
             if self.pause != 1 :  
                 try:             
                     ExtStrLine = (str)(self.dut.rLineCom())
                     if len(ExtStrLine) !=0:
+                        self.t1 = time.time()
+                        self.dt = self.t1 - self.t2
+                        self.t2 = self.t1
+                        self.vitesse = 3.6 * ESPACEWHEEL / self.dt 
+                        if self.vitesse < VITESSEMAX:
+                            self.lblvitesse.setPalette(pal)
+                        else:
+                            self.lblvitesse.setPalette(palRed)
+                        self.lblvitesse.setText(str("{0:.2f}".format(self.vitesse)) + " Km/h") 
+                        print(str(self.vitesse))
                         self.getActiveWheel()
                         print(str(self.ActiveWheel))
                         self.x = self.xcolumn.getVal()
@@ -702,6 +724,11 @@ class MYP2(QMainWindow):
         self.lblGoOhm.setText("design by GoOHM")     
         self.lblGoOhm.setGeometry(0,0,25,25)
         self.lblGoOhm.setPalette(pal)
+        
+        self.lblvitesse = QtWidgets.QLabel() 
+        self.lblvitesse.setText("Km/h")     
+        self.lblvitesse.setGeometry(0,0,25,25)
+        self.lblvitesse.setPalette(pal)
        
         self.view = ImgDrawer()
         self.view.resize(1000, 600) 
@@ -724,7 +751,8 @@ class MYP2(QMainWindow):
         secGroupBox.setGeometry(0,0,300,300)
         secLayout = QtWidgets.QGridLayout()
         secLayout.addWidget(self.btnStartStop,0, 0)
-        secLayout.addWidget(self.btnPause,0, 2)  
+        secLayout.addWidget(self.btnPause,0, 2) 
+        secLayout.addWidget(self.lblvitesse,1,0) 
         secLayout.addWidget(self.lblGoOhm,1, 2)
         secLayout.setRowStretch(0,0)       
         secLayout.setColumnStretch(1,1)
