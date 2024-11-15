@@ -20,10 +20,10 @@ import os.path
 import threading
 import datetime
 
-LARGEURCHARIOT = 1.4  # largeur chariot
+LARGEURCHARIOT = 1.46  # largeur chariot
 NWHEEL = 6        #nombre de roue
-ESPACEWHEEL= 0.2 #espace entre chacune roue ectrochimique  en metre
-DISTWHEEL = 0.628  #périmètre roue odometre en metre
+ESPACEWHEEL= 0.23 #espace entre chacune roue ectrochimique  en metre
+DISTWHEEL = 0.157  #périmètre roue odometre en metre
 VITESSEMAX = 3.5
 
 AWHEELCOEF = float((ESPACEWHEEL * (NWHEEL-1))) / 2.0      #coeaf A
@@ -33,6 +33,7 @@ pal.setColor(QPalette.Base, QColor(60, 60, 60))
 pal.setColor(QPalette.Button, QColor(60, 60, 60))
 pal.setColor(QPalette.Text, QColor(255, 255, 255))
 pal.setColor(QPalette.WindowText, QColor(255, 255, 255))
+
 
 palRed = QPalette()
 palRed.setColor(QPalette.Base, QColor(60, 60, 60))
@@ -353,7 +354,8 @@ class MYP2(QMainWindow):
                
     def printThreadReadLine(self): 
         self.t1 = time.time()
-        self.t2 = time.time()     
+        self.t2 = time.time() 
+        count = 0    
         while(self.t1State==1):
             if self.pause != 1 :  
                 try:             
@@ -697,8 +699,8 @@ class MYP2(QMainWindow):
         self.cmdGroupBox.setPalette(palette)
 
         self.stage = PMLINE(name="Etage", delta=1.0)
-        self.xcolumn = PMLINE(name="Position: X (m)",delta=NWHEEL*ESPACEWHEEL)
-        self.ycolumn = PMLINE(name="& Y (m)", delta=NWHEEL*ESPACEWHEEL)
+        self.xcolumn = PMLINE(name="Position: X (m)",delta=LARGEURCHARIOT)
+        self.ycolumn = PMLINE(name="& Y (m)", delta=LARGEURCHARIOT)
         self.dir=DIRECTION()
         self.btnStartStop = QtWidgets.QPushButton("START")
         self.btnStartStop.setGeometry(QtCore.QRect(340, 30, 23, 20))
@@ -751,6 +753,7 @@ class MYP2(QMainWindow):
         secGroupBox.setGeometry(0,0,300,300)
         secLayout = QtWidgets.QGridLayout()
         secLayout.addWidget(self.btnStartStop,0, 0)
+       
         secLayout.addWidget(self.btnPause,0, 2) 
         secLayout.addWidget(self.lblvitesse,1,0) 
         secLayout.addWidget(self.lblGoOhm,1, 2)
