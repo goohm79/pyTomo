@@ -20,7 +20,7 @@ import os.path
 import threading
 import datetime
 
-LARGEURCHARIOT = 1.46  # largeur chariot
+LARGEURCHARIOT = 1.52  # largeur chariot
 NWHEEL = 6        #nombre de roue
 ESPACEWHEEL= 0.23 #espace entre chacune roue ectrochimique  en metre
 DISTWHEEL = 0.157  #périmètre roue odometre en metre

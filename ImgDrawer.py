@@ -42,7 +42,7 @@ class ColorLimit(QtWidgets.QWidget):
         mainLayout = QtWidgets.QGridLayout()
         
         self.lbl = QtWidgets.QLabel() 
-        self.lbl.setText(str(" < " + self.colorName + " < "))     
+        self.lbl.setText(str(" <= " + self.colorName + " < "))     
         self.lbl.setGeometry(0,0,25,25)
         palette = self.lbl.palette()
         r,g,b = ImageColor.getrgb(self.colorName)
@@ -380,15 +380,15 @@ class  ImgDrawer(QtWidgets.QWidget):
         y2 = int(((y+YOFFSET) * self.ratioY) + + PIXSIZE/2.0)
         transparency = 127    
         self.getLimit()
-        if meas > self.bLow and meas < self.bHigh:
+        if meas >= self.bLow and meas < self.bHigh:
             r,g,b = ImageColor.getrgb("blue")
-        elif meas > self.gLow and meas < self.gHigh :
+        elif meas >= self.gLow and meas < self.gHigh :
             r,g,b = ImageColor.getrgb("green")
-        elif meas > self.yLow and meas < self.yHigh :
+        elif meas >= self.yLow and meas < self.yHigh :
             r,g,b = ImageColor.getrgb("yellow")
-        elif meas > self.oLow and meas < self.oHigh :
+        elif meas >= self.oLow and meas < self.oHigh :
             r,g,b = ImageColor.getrgb("orange")        
-        elif meas > self.rLow and meas < self.rHigh :
+        elif meas >= self.rLow and meas < self.rHigh :
             r,g,b = ImageColor.getrgb("red")
         else:
             r,g,b = ImageColor.getrgb("grey")
