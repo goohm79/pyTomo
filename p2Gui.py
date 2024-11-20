@@ -23,7 +23,7 @@ import datetime
 LARGEURCHARIOT = 1.52  # largeur chariot
 NWHEEL = 6        #nombre de roue
 ESPACEWHEEL= 0.23 #espace entre chacune roue ectrochimique  en metre
-DISTWHEEL = 0.157  #périmètre roue odometre en metre
+DISTWHEEL = 0.098125  #périmètre roue odometre en metre
 VITESSEMAX = 3.5
 
 AWHEELCOEF = float((ESPACEWHEEL * (NWHEEL-1))) / 2.0      #coeaf A
