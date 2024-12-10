@@ -23,7 +23,7 @@ import datetime
 LARGEURCHARIOT = 1.52  # largeur chariot
 NWHEEL = 6        #nombre de roue
 ESPACEWHEEL= 0.23 #espace entre chacune roue ectrochimique  en metre
-DISTWHEEL = 0.09549  #périmètre/4 roue odometre en metre
+DISTWHEEL = 0.098125  #périmètre/4 roue odometre en metre
 VITESSEMAX = 3.5
 
 AWHEELCOEF = float((ESPACEWHEEL * (NWHEEL-1))) / 2.0      #coeaf A
@@ -217,7 +217,7 @@ class PMLINE(QtWidgets.QWidget):
         
     def setVal(self, val):
         self.value = val
-        self.inputbox.setText("{0:.2f}".format(self.value))
+        self.inputbox.setText("{0:.3f}".format(self.value))
         
     def getVal(self):
         self.value = float(self.inputbox.text())
@@ -385,7 +385,7 @@ class MYP2(QMainWindow):
                                 if self.ActiveWheel[i] == True:
                                     yWheel = self.y + (i*self.WheelDist)-AWHEELCOEF
                                     n = i+1
-                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[n]   + "\r" 
+                                    fileStr = str(self.stage.getVal())+ ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" + str("{0:.3f}".format(self.x)) + ";" + str("{0:.3f}".format(yWheel)) + ";" + tabDatas[n]   + "\r" 
                                     self.ExtractLogFile.writelines(fileStr)  
                                     self.view.set(float(self.x), float(yWheel), float(tabDatas[n]))
                                 
@@ -396,7 +396,7 @@ class MYP2(QMainWindow):
                                 if self.ActiveWheel[i] == True:
                                     yWheel = self.y + (((NWHEEL-1-i)*self.WheelDist)-AWHEELCOEF)
                                     n = i+1
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.2f}".format(self.x)) + ";" + str("{0:.2f}".format(yWheel)) + ";" + tabDatas[n]   + "\r" 
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";"  + self.dir.direction + ";" +  str("{0:.3f}".format(self.x)) + ";" + str("{0:.3f}".format(yWheel)) + ";" + tabDatas[n]   + "\r" 
                                     self.ExtractLogFile.writelines(fileStr)   
                                     self.view.set(float(self.x), float(yWheel), float(tabDatas[n]))
                                            
@@ -407,7 +407,7 @@ class MYP2(QMainWindow):
                                 if self.ActiveWheel[i] == True:
                                     xWheel = self.x + (i*self.WheelDist)-AWHEELCOEF
                                     n = i+1
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[n] + "\r"  
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.3f}".format(xWheel)) + ";" + str("{0:.3f}".format(self.y)) + ";" + tabDatas[n] + "\r"  
                                     self.ExtractLogFile.writelines(fileStr)
                                     self.view.set(float(xWheel), float(self.y), float(tabDatas[n]))
                                              
@@ -418,7 +418,7 @@ class MYP2(QMainWindow):
                                 if self.ActiveWheel[i] == True:
                                     xWheel = self.x + (((NWHEEL-1-i)*self.WheelDist)-AWHEELCOEF)
                                     n = i+1
-                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.2f}".format(xWheel)) + ";" + str("{0:.2f}".format(self.y)) + ";" + tabDatas[n]  + "\r"   
+                                    fileStr = str(self.stage.getVal()) + ";" + self.inputboxZone.text()+ ";" + self.dir.direction + ";" +  str("{0:.3f}".format(xWheel)) + ";" + str("{0:.3f}".format(self.y)) + ";" + tabDatas[n]  + "\r"   
                                     self.ExtractLogFile.writelines(fileStr)   
                                     self.view.set( float(xWheel), float(self.y), float(tabDatas[n]))
                                      
