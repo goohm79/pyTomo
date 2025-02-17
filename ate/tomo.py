@@ -10,7 +10,7 @@ from datetime import datetime
 
 
 class TOMO1S12V2I:
-  def __init__(self, comPort="/dev/ttyACM0"):
+  def __init__(self, comPort="/dev/TOMO_COM"):
 
     self.Meas = {}
     self.ZA = 0
@@ -253,6 +253,26 @@ class TOMO1S12V2I:
          self.Meas["V12"]=float(tabStrVal[idx+14]) 
          self.Meas["I1"]=float(tabStrVal[idx+15])
          self.Meas["I2"]=float(tabStrVal[idx+16])
+         
+  def setAcquireP2Pilote(self):
+     strVal = "AT+MEASP2=?\r\n"
+     ret = self.wrMeasCom(data=strVal)
+     if ret != 999999999:
+         val = ret.decode()
+         tabStrVal = val.split(';', 12)    
+         idx = 0     
+         self.Meas["V1"]=float(tabStrVal[idx+1])
+         self.Meas["V2"]=float(tabStrVal[idx+2])
+         self.Meas["V3"]=float(tabStrVal[idx+3])
+         self.Meas["V4"]=float(tabStrVal[idx+4])
+         self.Meas["V5"]=float(tabStrVal[idx+5])
+         self.Meas["V6"]=float(tabStrVal[idx+6])
+         self.Meas["I1"]=float(tabStrVal[idx+7])
+         self.Meas["I2"]=float(tabStrVal[idx+8])
+         self.Meas["I3"]=float(tabStrVal[idx+9])
+         self.Meas["I4"]=float(tabStrVal[idx+10])
+         self.Meas["I5"]=float(tabStrVal[idx+11])
+         self.Meas["I6"]=float(tabStrVal[idx+12]) 
           
          
   def getMeas(self, channel=''):
@@ -284,6 +304,14 @@ class TOMO1S12V2I:
        
   def stopP2(self):
     strVal = "AT+SP2=0\r\n"
+    r = self.wCom(data=strVal)
+
+  def startP2Pilote(self):
+    strVal = "AT+SEP2=1\r\n"
+    r = self.wCom(data=strVal)
+       
+  def stopP2Pilote(self):
+    strVal = "AT+SEP2=0\r\n"
     r = self.wCom(data=strVal)
 
   def setSeqU(self, I01=50, I02=100, TuA=10, TuB=120, TuC=30, TuD=120, TuE=10, msTempo=15, MeasPerDay=2,SourcePerWeek=1,Conf=1):

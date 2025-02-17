@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QRect, QRectF
 from PySide6.QtGui import QPalette, QBrush, QPen, QColor, QPainter, QPixmap, QImage
 from PySide6.QtOpenGL import *
 
-PATH = '/home/goohm/github/pyTomo/img/'
+PATH = '/home/goo/github/pyTomo/img/'
 PIXSIZE = 3   
 
 from PySide6 import QtCore, QtGui, QtWidgets
