@@ -7,13 +7,19 @@ class PL303:
         print('Class PL303')
         self.OutputState = 0
         self.comPort = comPort
+        self.SetCom()
+    
+    def SetCom(self):   
         try:
             self.com = serial.Serial(port=self.comPort, baudrate=9600, bytesize=8, timeout=2,
                                      stopbits=serial.STOPBITS_ONE)
             ret = self.Read("*IDN?")
             print("PowerSupply PL303-P Id: " + str(ret))
+            return 1
+            
         except:
-            print("comPort: " + self.comPort + " could not connected to PowerSupply PL303-P")
+            print("comPort: " + self.comPort + " could not connected to PowerSupply PL303-P")     
+            return 0
     # Press the green button in the gutter to run the script.
     def Output(self, val=None):
         if val == None:

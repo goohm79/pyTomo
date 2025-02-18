@@ -6,7 +6,7 @@ import datetime
 
 from ate.tomo import TOMO1S12V2I
 from ate.PL303P import PL303
-from gui.toolsGui import DIGIT, PMLINE, Worker
+from gui.toolsGui import SDIGIT, PMLINE, Worker
 from gui.p303Gui import PL303GUI
 
 from pickle import NONE
@@ -15,6 +15,8 @@ from PySide6 import  QtWidgets, QtGui # -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QWidget, QMainWindow
 from PySide6.QtGui import QColor
+
+import pyqtgraph as pg
 
 pal = QPalette()
 pal.setColor(QPalette.Base, QColor(60, 60, 60))
@@ -72,14 +74,14 @@ class MYP2(QMainWindow):
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         oneGroupBox.setPalette(palette)
         oneLayout.addWidget(self.lbllogo,0,0)
-        #oneLayout.addWidget(self.controlGroupBox,1,0)
+        oneLayout.addWidget(self.controlGroupBox,1,0)
         #oneLayout.addWidget(self.terminalGroupBox,2,0)
         oneLayout.addWidget(self.voltMeterGroupBox,0,2)
         oneLayout.addWidget(self.currentMeterGroupBox,1,2)
         oneLayout.addWidget(self.powerSupply,0,3,3,3)
         
-        oneLayout.setRowStretch(0,0)
-        oneLayout.setColumnStretch(1, 1)  
+        oneLayout.setRowStretch(2,2)
+        oneLayout.setColumnStretch(2, 2)  
         oneGroupBox.setLayout(oneLayout)
         
         self.mainLayout = QtWidgets.QGridLayout()
@@ -90,6 +92,7 @@ class MYP2(QMainWindow):
         self.mainLayout.setColumnStretch(1, 1)
         self.centralWidget.setLayout(self.mainLayout)
         
+        self.connect(self.btnConnect, SIGNAL("clicked()"),self.initDut)
         self.connect(self.btnEnSeqU, SIGNAL("clicked()"),self.setP2Prog)  
         self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)
         
@@ -212,7 +215,8 @@ class MYP2(QMainWindow):
                     self.t1State= 0   
             except:                             
                 print(ExtStrLine)
-
+                
+           
     def initDut(self):   
         pal = QPalette()
         pal.setColor(QPalette.Base, QColor(60, 60, 60))
@@ -225,11 +229,7 @@ class MYP2(QMainWindow):
                 self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
                 self.textEditTerminal.append("Connected to: " + "/dev/TOMO_COM")
                 self.dut.stopP2Pilote()
-                self.btnConnect.setText("Disconnect")
-                pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
-                self.btnConnect.setPalette(pal)            
-                #self.dut.setPwr(pwrIV=1, pwrS=1, pwrS33V=1)
-                self.textEditTerminal.append("Set power On")
+                           
                 self.displayMeas()
                 if self.dut.getP2() == 2:
                     self.btnEnSeqU.setText("Enable TOMO Prg.")
@@ -238,11 +238,40 @@ class MYP2(QMainWindow):
                     self.P2State  = 0
                     self.btnEnSeqU.setText("Enable P2 Pilote Prg.")
                 
+                pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
+                self.ledTomo.setPalette(pal) 
             except:
                 self.initState = 0
-                self.textEditTerminal.append("problem to connect to: " + "/dev/TOMO_COM")    
-                   
-           
+                pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
+                self.ledTomo.setPalette(pal)              
+            
+            if self.powerSupply.setCom() == 1:
+                pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
+                self.ledPL303.setPalette(pal)
+            else:
+                self.initState = 0
+                pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
+                self.ledPL303.setPalette(pal)
+            
+            if self.initState == 1:      
+                self.btnConnect.setText("Disconnect")
+                pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+                self.btnConnect.setPalette(pal) 
+        else:
+            if self.t1State == 1:
+                try:
+                    self.stopThreadReadLine()
+                except:
+                    self.t1State = 0
+            del self.dut
+            self.initState = 0
+            pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
+            self.ledPL303.setPalette(pal)
+            self.ledTomo.setPalette(pal)                 
+            self.btnConnect.setText("CONNECT")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnConnect.setPalette(pal)
+              
     
     def getMainTaskState(self):
         if self.dut.su_getMainTask() ==1 : 
@@ -302,19 +331,34 @@ class MYP2(QMainWindow):
         self.btnCal = QtWidgets.QPushButton("CALIBRATION")
         self.btnCal.setPalette(pal)
         self.btnCal.setDefault(True)
-        mainLayout.addWidget(self.btnCal,1,1)
+        mainLayout.addWidget(self.btnCal,1,2)
+        
+        self.btnConnect = QtWidgets.QPushButton("Connect")
+        self.btnConnect.setPalette(pal)
+        self.btnConnect.setDefault(True)
+        mainLayout.addWidget(self.btnConnect,2,2)
+
+        self.ledTomo= QtWidgets.QLabel("Tomo")
+        pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
+        self.ledTomo.setPalette(pal)
+        
+        mainLayout.addWidget(self.ledTomo,2,0)
+        
+        self.ledPL303= QtWidgets.QLabel("PL303")
+        self.ledPL303.setPalette(pal)
+        mainLayout.addWidget(self.ledPL303,2,1)
+        
         
 
         lblTask = QtWidgets.QLabel()
         mainLayout.addWidget(lblTask,0, 0)
-        lblTask.setText("Switch Tomo1S12V2I to P2")
+        lblTask.setText("Switch Tomo1S12V2I to P2.Pilote")
         # Seq Unitai Measure
         self.btnEnSeqU = QtWidgets.QPushButton()
         self.btnEnSeqU.setText("Enable")
         self.btnEnSeqU.setPalette(pal)
         self.btnEnSeqU.setDefault(True)
-        mainLayout.addWidget(self.btnEnSeqU,0, 1)
-        
+        mainLayout.addWidget(self.btnEnSeqU,0, 2)       
           
         
         mainLayout.setRowStretch(2,2)
@@ -325,19 +369,19 @@ class MYP2(QMainWindow):
         
        
     def createVoltMeterGroupBox(self):
-        self.voltMeterGroupBox = QtWidgets.QGroupBox("VoltMeters  [mV]")
+        self.voltMeterGroupBox = QtWidgets.QGroupBox("[mV]")
         self.voltMeterGroupBox.setGeometry(0,0,100,50)
         
         palette = self.voltMeterGroupBox.palette()
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.voltMeterGroupBox.setPalette(palette)
 
-        self.vm1 = DIGIT("V1")
-        self.vm2 = DIGIT("V2")
-        self.vm3 = DIGIT("V3")
-        self.vm4 = DIGIT("V4")
-        self.vm5 = DIGIT("V5")
-        self.vm6 = DIGIT("V6")
+        self.vm1 = SDIGIT("V1")
+        self.vm2 = SDIGIT("V2")
+        self.vm3 = SDIGIT("V3")
+        self.vm4 = SDIGIT("V4")
+        self.vm5 = SDIGIT("V5")
+        self.vm6 = SDIGIT("V6")
 
         mainLayout = QtWidgets.QGridLayout()
         
@@ -352,19 +396,19 @@ class MYP2(QMainWindow):
     
     
     def createCurrentMeterGroupBox(self):
-        self.currentMeterGroupBox = QtWidgets.QGroupBox("AmpereMeters [mA]")
+        self.currentMeterGroupBox = QtWidgets.QGroupBox("[mA]")
         self.currentMeterGroupBox.setGeometry(0,0,100,50)
         
         palette = self.currentMeterGroupBox.palette()
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.currentMeterGroupBox.setPalette(palette)
 
-        self.am1 = DIGIT("I1")
-        self.am2 = DIGIT("I2")
-        self.am3 = DIGIT("I3")
-        self.am4 = DIGIT("I4")
-        self.am5 = DIGIT("I5")
-        self.am6 = DIGIT("I6")
+        self.am1 = SDIGIT("I1")
+        self.am2 = SDIGIT("I2")
+        self.am3 = SDIGIT("I3")
+        self.am4 = SDIGIT("I4")
+        self.am5 = SDIGIT("I5")
+        self.am6 = SDIGIT("I6")
 
         mainLayout = QtWidgets.QGridLayout()
         
@@ -378,15 +422,49 @@ class MYP2(QMainWindow):
         self.currentMeterGroupBox.setLayout(mainLayout)        
 
     def createP2PiloteGroupBox(self):
-        self.P2PiloteGroupBox = QtWidgets.QGroupBox("P2 Pilote Control")
+        self.P2PiloteGroupBox = QtWidgets.QGroupBox()
         self.P2PiloteGroupBox.setGeometry(0,0,10,10)
         palette = self.P2PiloteGroupBox.palette()
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.P2PiloteGroupBox.setPalette(palette)    
         mainLayout = QtWidgets.QGridLayout()  
+        
+        self.btnOpenFile = QtWidgets.QPushButton("OpenFile")
+        self.btnOpenFile.setPalette(pal)
+        self.btnOpenFile.setDefault(True)
+        mainLayout.addWidget(self.btnOpenFile,0,0)
+        
+        self.btnSaveFile = QtWidgets.QPushButton("SaveFile")
+        self.btnSaveFile.setPalette(pal)
+        self.btnSaveFile.setDefault(True)
+        mainLayout.addWidget(self.btnSaveFile,0,1)
+        
+        self.btnStartStop = QtWidgets.QPushButton("Start")
+        self.btnStartStop.setPalette(pal)
+        self.btnStartStop.setDefault(True)
+        mainLayout.addWidget(self.btnStartStop,0,2)
+        pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+        self.btnStartStop.setPalette(pal)
+        
+        self.btnPoldePol = QtWidgets.QPushButton("Polarisation")
+        self.btnPoldePol.setPalette(pal)
+        self.btnPoldePol.setDefault(True)
+        mainLayout.addWidget(self.btnPoldePol,0,4)
+        pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+        self.btnPoldePol.setPalette(pal)
+        
+        
+        self.plotGraph = pg.PlotWidget()
+        self.plotGraph.setBackground((53, 53, 53))
+        mainLayout.addWidget(self.plotGraph,1,0,1,5)
+        time = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 30]
+        self.plotGraph.plot(time, temperature)
+
+
     
         mainLayout.setRowStretch(0,2)
-        mainLayout.setColumnStretch(0, 1)
+        mainLayout.setColumnStretch(3, 3)
         self.P2PiloteGroupBox.setLayout(mainLayout)        
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

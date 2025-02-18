@@ -1,6 +1,7 @@
 import sys
 import serial.tools.list_ports
 import time
+import json
 
 from timeloop import Timeloop
 from datetime import timedelta
@@ -30,6 +31,46 @@ palRed.setColor(QPalette.Base, QColor(60, 60, 60))
 palRed.setColor(QPalette.Button, QColor(60, 60, 60))
 palRed.setColor(QPalette.Text, QColor(255, 0, 0))
 palRed.setColor(QPalette.WindowText, QColor(255, 0, 0))
+
+class PARAMGUI(QtWidgets.QWidget):
+    def __init__(self, project= "Pilote"):
+        self.projectParam = project
+        self.listJsonAllParam = ""
+        if self.projectParam == "Pilote":
+            self.fileName= "paramPilote.json"
+        
+    def CreatePiloteJsonParam(self):
+        newParam = {
+              "Project": "P2_Pilote",
+              
+              "Polarisation_State": True,
+            
+              "PL303_State": True,
+            
+              "PL303_Ilim": 1000,
+            
+              "PL303_Vlim": 10,
+            
+              "CSVfilePath": "/home/goo/github/pyTomo/Dataslog.csv",
+              },
+        with open(self.fileName, mode="w", encoding="utf-8") as write_file: json.dump(newParam, write_file)
+             
+        
+    def SetJsonParam(self, name="", val=""): 
+        self.listJsonAllParam[0][name]=val
+        
+    def GetJsonParam (self, name =""): 
+        return self.listJsonAllParam[0].get(name)
+     
+    def ReadJsonParam(self):           
+        with open(self.fileName, 'r') as f: ret = json.load(f)
+        self.listJsonAllParam = ret
+        return ret
+        
+    def WriteJsonParam(self):   
+        with open(self.fileName, mode="w", encoding="utf-8") as write_file: json.dump(self.listJsonAllParam, write_file)
+            
+        
 
 class DIRECTION(QtWidgets.QWidget):
     def __init__(self):
@@ -266,5 +307,12 @@ class Worker(QObject):
     def stop(self):
         self.finished.emit()
         
- 
+if __name__ == "__main__":
+    dut = PARAMGUI()
+    dut.CreatePiloteJsonParam()
+    dut.ReadJsonParam()
+    dut.SetJsonParam(name="Project",val="roro")
+    dut.WriteJsonParam()
+    dut.ReadJsonParam()
+    print(dut.GetJsonParam(name="Project"))
   

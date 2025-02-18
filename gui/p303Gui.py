@@ -41,6 +41,8 @@ class PL303GUI(QtWidgets.QWidget):
         self.createPL303GroupBox()
         
         self.ps = PL303(comPort="/dev/PL303_COM")
+        
+        self.setCom()
         self.onOffLock = 1
         self.onOffState = 0
         self.ps.Output(self.onOffState) 
@@ -63,6 +65,10 @@ class PL303GUI(QtWidgets.QWidget):
     def __del__(self):
         NONE
     
+    def setCom(self): 
+        return self.ps.SetCom()
+        
+        
     def onOfflock(self):  
         if self.onOffLock == 0:
             self.onOff()
