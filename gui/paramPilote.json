@@ -1,1 +1,1 @@
-[{"Project": "roro", "Polarisation_State": true, "PL303_State": true, "PL303_Ilim": 1000, "PL303_Vlim": 10, "CSVfilePath": "/home/goo/github/pyTomo/Dataslog.csv"}]
+[{"Project": "roro", "Log_State": 1, "Polarisation_State": 1, "PL303_State": 1, "PL303_Ilim": 1000, "PL303_Vlim": 10, "CSVfilePath": "/home/goo/github/pyTomo/Dataslog.csv"}]

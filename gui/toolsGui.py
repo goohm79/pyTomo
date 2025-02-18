@@ -38,14 +38,17 @@ class PARAMGUI(QtWidgets.QWidget):
         self.listJsonAllParam = ""
         if self.projectParam == "Pilote":
             self.fileName= "paramPilote.json"
+            self.ReadJsonParam()
         
     def CreatePiloteJsonParam(self):
         newParam = {
               "Project": "P2_Pilote",
               
-              "Polarisation_State": True,
+              "Log_State": 1,
+              
+              "Polarisation_State": 1,
             
-              "PL303_State": True,
+              "PL303_State": 1,
             
               "PL303_Ilim": 1000,
             
@@ -58,6 +61,7 @@ class PARAMGUI(QtWidgets.QWidget):
         
     def SetJsonParam(self, name="", val=""): 
         self.listJsonAllParam[0][name]=val
+        self.WriteJsonParam()
         
     def GetJsonParam (self, name =""): 
         return self.listJsonAllParam[0].get(name)

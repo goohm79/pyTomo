@@ -308,11 +308,19 @@ class TOMO1S12V2I:
 
   def startP2Pilote(self):
     strVal = "AT+SEP2=1\r\n"
-    r = self.wCom(data=strVal)
+    self.com.flushInput()
+    self.com.flushOutput()
+    a = strVal.encode('utf-8')
+    self.com.write(data=a)
+    self.com.flushInput()
        
   def stopP2Pilote(self):
     strVal = "AT+SEP2=0\r\n"
-    r = self.wCom(data=strVal)
+    self.com.flushInput()
+    self.com.flushOutput()
+    a = strVal.encode('utf-8')
+    self.com.write(data=a)
+    self.com.flushInput()
 
   def setSeqU(self, I01=50, I02=100, TuA=10, TuB=120, TuC=30, TuD=120, TuE=10, msTempo=15, MeasPerDay=2,SourcePerWeek=1,Conf=1):
       self.SeqU ["I01"] = I01 # uA

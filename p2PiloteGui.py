@@ -5,8 +5,8 @@ import threading
 import datetime
 
 from ate.tomo import TOMO1S12V2I
-from ate.PL303P import PL303
-from gui.toolsGui import SDIGIT, PMLINE, Worker
+
+from gui.toolsGui import PARAMGUI, SDIGIT, PMLINE, Worker
 from gui.p303Gui import PL303GUI
 
 from pickle import NONE
@@ -34,13 +34,15 @@ class MYP2(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('p2PiloteGUI.py')
-         # Now use a palette to switch to dark colors:
+        # Now use a palette to switch to dark colors:
         app.setStyle("Fusion")
         palette = QPalette()
         palette.setColor(QPalette.Window, QColor(53, 53, 53))
         palette.setColor(QPalette.WindowText,QtGui.QColor(0, 0, 0))
-        app.setPalette(palette)      
-        
+        app.setPalette(palette)   
+           
+        self.jsonConf = PARAMGUI(project= "Pilote")
+       
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
         
@@ -49,8 +51,7 @@ class MYP2(QMainWindow):
         self.createControlGroupBox()
         self.createTerminalGroupBox()
         self.createP2PiloteGroupBox()
-        
-        
+             
         self.powerSupply = PL303GUI()
 
         #self.tomowf = TOMOWATERFLOW(x=1000,y=600)
@@ -59,13 +60,7 @@ class MYP2(QMainWindow):
         self.lbllogo.setPixmap(pixmap)
         
         self.initState = 0  
-        self.t1State = 0
-        self.P2State = 0
-        self.pause =0
-        self.start = 0   
-        self.x = 0 
-        self.y = 0 
-        self.ActiveWheel = []
+        self.t1State = 0    
 
         oneLayout= QtWidgets.QGridLayout()
         oneGroupBox = QtWidgets.QGroupBox("")
@@ -75,7 +70,6 @@ class MYP2(QMainWindow):
         oneGroupBox.setPalette(palette)
         oneLayout.addWidget(self.lbllogo,0,0)
         oneLayout.addWidget(self.controlGroupBox,1,0)
-        #oneLayout.addWidget(self.terminalGroupBox,2,0)
         oneLayout.addWidget(self.voltMeterGroupBox,0,2)
         oneLayout.addWidget(self.currentMeterGroupBox,1,2)
         oneLayout.addWidget(self.powerSupply,0,3,3,3)
@@ -94,41 +88,34 @@ class MYP2(QMainWindow):
         
         self.connect(self.btnConnect, SIGNAL("clicked()"),self.initDut)
         self.connect(self.btnEnSeqU, SIGNAL("clicked()"),self.setP2Prog)  
-        self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)
+        self.connect(self.btnCal, SIGNAL("clicked()"),self.setCal)        
         
-        self.initDut()
+        self.connect(self.btnLogFile, SIGNAL("clicked()"),self.selectLogFile)
+        self.connect(self.btnStartStop, SIGNAL("clicked()"),self.startStopLog)  
+        self.connect(self.btnPoldePol, SIGNAL("clicked()"),self.polDepol)
+        
+        self.initPiloteGui()
+        self.startThreadReadLine()
 
         
-    def __del__(self):
+    def closeEvent(self, event):        
+        self.Ilim = self.powerSupply.getI()
+        self.Vlim = self.powerSupply.getV()
+        self.StatePS = self.powerSupply.getonOff()
+        self.saveJsonConf()
         self.stopThreadReadLine()
-       
     
         
     def startThreadReadLine(self):  
         if self.initState == 1:
             try:
-                self.logDateTime = datetime.datetime.now()
-                self.logFileName = "log_stage-" + str(self.stage.getVal()) + "_zone-" + self.inputboxZone.text() + "_date-" + str(self.logDateTime)
-                file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
-                self.logFileName = file[0]
-                #self.view.initImage(self.logFileName + ".png")
-  
-                self.ExtractLogFileName = file[0]
-                if not os.path.exists(self.ExtractLogFileName):
-                    self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-                    self.strLine = "LEVEL;ZONE;DIRECTION;X;Y;MEAS\r"
-                    self.ExtractLogFile.writelines(self.strLine)
-                    self.ExtractLogFile.close()
-                self.x = self.xcolumn.getVal()
-                self.dut.startP2()
                 # création de thread
-                self.t1 = threading.Thread(target=self.printThreadReadLine)
+                self.t1 = threading.Thread(target=self.runThreadReadLine)
                 self.t1State=1
-                self.t1.start()
-                
+                self.t1.start()                
                 self.timer = QTimer()
-                self.timer.setInterval(5000)
-                self.timer.timeout.connect(self.timerImageViewrefresh)
+                self.timer.setInterval(500)
+                self.timer.timeout.connect(self.runtimerPlotrefresh)
                 self.timer.start() 
             except:
                 self.t1State=0
@@ -137,22 +124,31 @@ class MYP2(QMainWindow):
         try: 
             self.timer.stop()
             try:
-                self.ExtractLogFile.close()  
+                self.logFileName.close()  
             except:
                 None
             self.t1State=0
             self.t1.join()
-            self.dut.stopP2()
         except:
             NONE
                
-    def printThreadReadLine(self): 
-        self.t1 = time.time()
-        self.t2 = time.time()  
+    def runThreadReadLine(self): 
+        idx = 0 
         while(self.t1State==1):
-            if self.pause != 1 :  
+            if self.startLogSate == 0 :  
                 try:             
-                    NONE
+                    ExtStrLine = (str)(self.dut.rLineCom())
+                    if len(ExtStrLine) !=0:
+                        if ExtStrLine !="OK\r\n":
+                            self.t1 = time.time()
+                            idx +=1
+                            IPS = self.powerSupply.measI()
+                            VPS = self.powerSupply.measV()                        
+                            fileStr = ""
+                            fileStr = str(self.t1)+ ";" + str(self.depolState)+ ";" + str(VPS)+ ";" + str(IPS)+ ";" + ExtStrLine
+                            self.ExtractLogFile = open(self.logFileName, "a")
+                            self.ExtractLogFile.writelines(fileStr)
+                            self.ExtractLogFile.close()                         
                 except:
                     self.dut.flushCom() 
                     try:
@@ -160,14 +156,79 @@ class MYP2(QMainWindow):
                     except:
                         NONE 
             else:
+                idx = 0
                 self.dut.flushCom()  
                   
-    def timerImageViewrefresh(self):
+    def runtimerPlotrefresh(self):
+        self.powerSupply.displayMeas()
         try:
             NONE
         except:
             NONE
-            
+    
+    def loadJsonConf(self):
+        self.projectName = self.jsonConf.GetJsonParam(name="Project")
+        self.depolState = self.jsonConf.GetJsonParam(name="Polarisation_State")
+        self.startLogSate = self.jsonConf.GetJsonParam(name="Log_State")
+        self.logFileName = self.jsonConf.GetJsonParam(name="CSVfilePath")
+        self.Vlim = self.jsonConf.GetJsonParam(name="PL303_Vlim")
+        self.Ilim = self.jsonConf.GetJsonParam(name="PL303_Ilim")
+        self.StatePS = self.jsonConf.GetJsonParam(name="PL303_State")
+        NONE
+        
+    def saveJsonConf(self):
+        self.Ilim = self.powerSupply.getI()
+        self.Vlim = self.powerSupply.getV()
+        self.StatePS = self.powerSupply.getonOff()
+        self.jsonConf.SetJsonParam(name="Project", val=self.projectName)
+        self.jsonConf.SetJsonParam(name="Polarisation_State", val=self.depolState)
+        self.jsonConf.SetJsonParam(name="Log_State", val=self.startLogSate)
+        self.jsonConf.SetJsonParam(name="CSVfilePath", val=self.logFileName)
+        self.jsonConf.SetJsonParam(name="PL303_Vlim", val=self.Vlim)
+        self.jsonConf.SetJsonParam(name="PL303_Ilim", val=self.Ilim)
+        self.jsonConf.SetJsonParam(name="PL303_State", val=self.StatePS)      
+    
+    def selectLogFile(self):
+        self.logDateTime = datetime.datetime.now()
+        self.logFileName = "log_p2Pilote_" + "_date-" + str(self.logDateTime)
+        file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
+        self.logFileName = file[0]
+        self.jsonConf.SetJsonParam(name="CSVfilePath",val=self.logFileName)
+        self.ExtractLogFileName = file[0]
+        if not os.path.exists(self.ExtractLogFileName):
+            self.ExtractLogFile = open(self.ExtractLogFileName, "w")
+            self.strLine = "time;polarState;VPS;IPS;TomoIdx;V1;V2;V3;V4;V5;V6;I1;I2;I3;I4;I5;I6\r"
+            self.ExtractLogFile.writelines(self.strLine)
+            self.ExtractLogFile.close()
+        
+    def startStopLog(self):
+        if self.startLogSate == 0: # start log et acuquiition
+            self.btnStartStop.setText("STOP LOG")
+            pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+            self.btnStartStop.setPalette(pal)            
+            self.startLogSate = 1
+            self.dut.startP2Pilote()
+        else: # stop
+            self.btnStartStop.setText("START LOG")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnStartStop.setPalette(pal)
+            self.startLogSate = 0
+            self.dut.stopP2Pilote()
+        
+    def polDepol(self):   
+        self.tpol = time.time()   
+        if self.depolState == 0: # polarisattion state
+            self.btnPoldePol.setText("SET DEPOL")
+            pal.setColor(QPalette.ButtonText, QColor(231, 140, 49))
+            self.btnPoldePol.setPalette(pal)  
+            self.powerSupply.SetonOff(state=1)       
+            self.depolState = 1   
+        else: # polarisattion state
+            self.btnPoldePol.setText("SET POL")
+            pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
+            self.btnPoldePol.setPalette(pal)
+            self.powerSupply.SetonOff(state=0) 
+            self.depolState = 0         
         
     def setP2Prog(self):
         if self.P2State  == 1:
@@ -216,7 +277,36 @@ class MYP2(QMainWindow):
             except:                             
                 print(ExtStrLine)
                 
-           
+    def initPiloteGui(self): 
+        self.loadJsonConf()
+        self.initDut()
+        
+        if self.startLogSate == 1: # polarisattion state
+            self.btnStartStop.setText("STOP LOG")
+            pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+            self.btnStartStop.setPalette(pal)  
+            self.dut.startP2Pilote()          
+        else: # polarisattion state
+            self.btnStartStop.setText("START LOG")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnStartStop.setPalette(pal)
+            self.dut.stopP2Pilote()
+            
+        if self.depolState == 1: # polarisation state
+            self.btnPoldePol.setText("SET DEPOL")
+            pal.setColor(QPalette.ButtonText, QColor(231, 140, 49))
+            self.btnPoldePol.setPalette(pal)  
+            self.powerSupply.SetonOff(state=1)          
+        else: # polarisattion state
+            self.btnPoldePol.setText("SET POL")
+            pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
+            self.btnPoldePol.setPalette(pal)
+            self.powerSupply.SetonOff(state=0)
+
+        self.powerSupply.setVI(v=self.Vlim, i=self.Ilim)
+        self.powerSupply.SetonOff(state= self.StatePS)
+        self.initState = 1
+              
     def initDut(self):   
         pal = QPalette()
         pal.setColor(QPalette.Base, QColor(60, 60, 60))
@@ -239,7 +329,7 @@ class MYP2(QMainWindow):
                     self.btnEnSeqU.setText("Enable P2 Pilote Prg.")
                 
                 pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
-                self.ledTomo.setPalette(pal) 
+                self.ledTomo.setPalette(pal)               
             except:
                 self.initState = 0
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
@@ -270,16 +360,14 @@ class MYP2(QMainWindow):
             self.ledTomo.setPalette(pal)                 
             self.btnConnect.setText("CONNECT")
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
-            self.btnConnect.setPalette(pal)
-              
+            self.btnConnect.setPalette(pal)             
     
     def getMainTaskState(self):
         if self.dut.su_getMainTask() ==1 : 
             self.btnEnSeqU.setText("SeqU STOP")
             self.t1State = 1
         else:
-            self.t1State = 0
-                  
+            self.t1State = 0                  
             
     def displayMeas(self):
         if self.t1State == 0:
@@ -296,28 +384,20 @@ class MYP2(QMainWindow):
             self.am3.lcd.display(self.dut.getMeas("I3"))
             self.am4.lcd.display(self.dut.getMeas("I4"))
             self.am5.lcd.display(self.dut.getMeas("I5"))
-            self.am6.lcd.display(self.dut.getMeas("I6"))
-            
-        
-            
+            self.am6.lcd.display(self.dut.getMeas("I6"))      
     
-    def createTerminalGroupBox(self):
-        
+    def createTerminalGroupBox(self):        
         self.terminalGroupBox = QtWidgets.QGroupBox("Terminal")
         self.terminalGroupBox.setGeometry(0,0,30,10)
         self.terminalGroupBox.setPalette(pal)
         mainLayout = QtWidgets.QGridLayout()  
-       
+     
         # cmd line
         self.textEditTerminal = QtWidgets.QTextEdit()  
         self.textEditTerminal.setText("")
         self.textEditTerminal.setPalette(pal)
-
-        mainLayout.addWidget(self.textEditTerminal,0, 0,0,0)
-        mainLayout.setRowStretch(1,1)
-       
+        mainLayout.addWidget(self.textEditTerminal,0, 0,0,0)     
         self.terminalGroupBox.setLayout(mainLayout)
-    
               
     def createControlGroupBox(self):
         self.controlGroupBox = QtWidgets.QGroupBox("Control")
@@ -325,9 +405,7 @@ class MYP2(QMainWindow):
         palette = self.controlGroupBox.palette()
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.controlGroupBox.setPalette(palette)    
-        mainLayout = QtWidgets.QGridLayout()  
-      
-       
+        mainLayout = QtWidgets.QGridLayout()     
         self.btnCal = QtWidgets.QPushButton("CALIBRATION")
         self.btnCal.setPalette(pal)
         self.btnCal.setDefault(True)
@@ -342,14 +420,12 @@ class MYP2(QMainWindow):
         pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
         self.ledTomo.setPalette(pal)
         
-        mainLayout.addWidget(self.ledTomo,2,0)
+        mainLayout.addWidget(self.ledTomo,1,0)
         
         self.ledPL303= QtWidgets.QLabel("PL303")
         self.ledPL303.setPalette(pal)
         mainLayout.addWidget(self.ledPL303,2,1)
         
-        
-
         lblTask = QtWidgets.QLabel()
         mainLayout.addWidget(lblTask,0, 0)
         lblTask.setText("Switch Tomo1S12V2I to P2.Pilote")
@@ -358,8 +434,7 @@ class MYP2(QMainWindow):
         self.btnEnSeqU.setText("Enable")
         self.btnEnSeqU.setPalette(pal)
         self.btnEnSeqU.setDefault(True)
-        mainLayout.addWidget(self.btnEnSeqU,0, 2)       
-          
+        mainLayout.addWidget(self.btnEnSeqU,0, 2)               
         
         mainLayout.setRowStretch(2,2)
         mainLayout.setColumnStretch(0, 1)
@@ -429,39 +504,30 @@ class MYP2(QMainWindow):
         self.P2PiloteGroupBox.setPalette(palette)    
         mainLayout = QtWidgets.QGridLayout()  
         
-        self.btnOpenFile = QtWidgets.QPushButton("OpenFile")
-        self.btnOpenFile.setPalette(pal)
-        self.btnOpenFile.setDefault(True)
-        mainLayout.addWidget(self.btnOpenFile,0,0)
+        self.btnLogFile = QtWidgets.QPushButton("LogFile")
+        self.btnLogFile.setPalette(pal)
+        self.btnLogFile.setDefault(True)
+        mainLayout.addWidget(self.btnLogFile,0,0)
         
-        self.btnSaveFile = QtWidgets.QPushButton("SaveFile")
-        self.btnSaveFile.setPalette(pal)
-        self.btnSaveFile.setDefault(True)
-        mainLayout.addWidget(self.btnSaveFile,0,1)
-        
-        self.btnStartStop = QtWidgets.QPushButton("Start")
+        self.btnStartStop = QtWidgets.QPushButton("START LOG")
         self.btnStartStop.setPalette(pal)
         self.btnStartStop.setDefault(True)
-        mainLayout.addWidget(self.btnStartStop,0,2)
+        mainLayout.addWidget(self.btnStartStop,0,1)
         pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
         self.btnStartStop.setPalette(pal)
         
-        self.btnPoldePol = QtWidgets.QPushButton("Polarisation")
+        self.btnPoldePol = QtWidgets.QPushButton("SET POL")
+        pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
         self.btnPoldePol.setPalette(pal)
         self.btnPoldePol.setDefault(True)
         mainLayout.addWidget(self.btnPoldePol,0,4)
-        pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
-        self.btnPoldePol.setPalette(pal)
-        
-        
+      
         self.plotGraph = pg.PlotWidget()
         self.plotGraph.setBackground((53, 53, 53))
         mainLayout.addWidget(self.plotGraph,1,0,1,5)
         time = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 30]
         self.plotGraph.plot(time, temperature)
-
-
     
         mainLayout.setRowStretch(0,2)
         mainLayout.setColumnStretch(3, 3)

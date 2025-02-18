@@ -88,7 +88,34 @@ class PL303GUI(QtWidgets.QWidget):
             self.btnOnOff.setText("ON")
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
             self.btnOnOff.setPalette(pal)
-        self.ps.Output(self.onOffState)    
+        self.ps.Output(self.onOffState)   
+        
+    def SetonOff(self, state = 0): 
+        self.onOffState = state 
+        self.ps.Output(self.onOffState) 
+        if self.onOffState == 1:
+            self.btnOnOff.setText("OFF")
+            pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+            self.btnOnOff.setPalette(pal)
+        else:
+            self.btnOnOff.setText("ON")
+            pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
+            self.btnOnOff.setPalette(pal)
+            
+    def getonOff(self):
+        return self.onOffState
+    
+    def setVI(self, v=0, i=0):  
+        self.v.setVal(v)
+        self.i.setVal(i)
+        self.ps.Set(fct='V', val=self.v.getVal())
+        self.ps.Set(fct='I', val=self.i.getVal())   
+        
+    def getV(self):  
+        return self.v.getVal()
+    
+    def getI(self):  
+        return self.i.getVal()   
            
     def set(self):  
         self.ps.Set(fct='V', val=self.v.getVal())
