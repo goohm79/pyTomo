@@ -135,7 +135,7 @@ class MYP2(QMainWindow):
     def runThreadReadLine(self): 
         idx = 0 
         while(self.t1State==1):
-            if self.startLogSate == 0 :  
+            if self.startLogSate == 1 :  
                 try:             
                     ExtStrLine = (str)(self.dut.rLineCom())
                     if len(ExtStrLine) !=0:
@@ -319,22 +319,22 @@ class MYP2(QMainWindow):
                 self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
                 self.textEditTerminal.append("Connected to: " + "/dev/TOMO_COM")
                 self.dut.stopP2Pilote()
-                           
-                self.displayMeas()
+                try:          
+                    self.displayMeas()
+                except:
+                    None   
                 if self.dut.getP2() == 2:
                     self.btnEnSeqU.setText("Enable TOMO Prg.")
                     self.P2State  = 1
                 else:
                     self.P2State  = 0
                     self.btnEnSeqU.setText("Enable P2 Pilote Prg.")
-                
                 pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
                 self.ledTomo.setPalette(pal)               
             except:
                 self.initState = 0
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
                 self.ledTomo.setPalette(pal)              
-            
             if self.powerSupply.setCom() == 1:
                 pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
                 self.ledPL303.setPalette(pal)
@@ -424,7 +424,7 @@ class MYP2(QMainWindow):
         
         self.ledPL303= QtWidgets.QLabel("PL303")
         self.ledPL303.setPalette(pal)
-        mainLayout.addWidget(self.ledPL303,2,1)
+        mainLayout.addWidget(self.ledPL303,2,0)
         
         lblTask = QtWidgets.QLabel()
         mainLayout.addWidget(lblTask,0, 0)

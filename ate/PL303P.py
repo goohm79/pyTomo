@@ -78,9 +78,9 @@ class PL303:
             if self.Write(cmd) == 1:
                 return self.com.readline()
             else:
-                return 0
+                return -1
         except:
-            return "999"
+            return -1
 
 if __name__ == '__main__':
     dut = PL303()
