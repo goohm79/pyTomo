@@ -88,8 +88,9 @@ if __name__ == '__main__':
     dut.Set('I', 1.0)
     dut.Output(0)
     sleep(2)
-    print(str(dut.Meas('V')))
-    print(str(dut.Meas('I')))
+    while 1:
+        print(str(dut.Meas('V')))
+        print(str(dut.Meas('I')))
     dut.Output(1)
     sleep(2)
     print(str(dut.Meas('V')))
