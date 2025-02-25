@@ -287,6 +287,10 @@ class TOMO1S12V2I:
   def setTomotoP2(self):
     strVal = "AT+P2=1\r\n"
     r = self.wCom(data=strVal)
+
+  def setTomotoP2Pilote(self):
+    strVal = "AT+P2=2\r\n"
+    r = self.wCom(data=strVal)
     
   def setP2toTomo(self):
     strVal = "AT+P2=0\r\n"

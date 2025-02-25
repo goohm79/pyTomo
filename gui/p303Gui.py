@@ -139,8 +139,8 @@ class PL303GUI(QtWidgets.QWidget):
         palette.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))     
         self.PL303GroupBox.setPalette(palette)
 
-        self.vm = SDIGIT("Voltage")
-        self.im = SDIGIT("Current")
+        self.vm = SDIGIT("Voltage [V]")
+        self.im = SDIGIT("Current [A]")
         
         self.v =PMLINE(delta =0.1)
         self.i =PMLINE(delta =0.1)

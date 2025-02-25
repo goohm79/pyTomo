@@ -29,6 +29,8 @@ palRed.setColor(QPalette.Base, QColor(60, 60, 60))
 palRed.setColor(QPalette.Button, QColor(60, 60, 60))
 palRed.setColor(QPalette.Text, QColor(255, 0, 0))
 palRed.setColor(QPalette.WindowText, QColor(255, 0, 0))
+
+
        
 class MYP2(QMainWindow):
     def __init__(self):
@@ -95,7 +97,7 @@ class MYP2(QMainWindow):
         self.connect(self.btnPoldePol, SIGNAL("clicked()"),self.polDepol)
         
         self.initPiloteGui()
-        self.startThreadReadLine()
+        
 
         
     def closeEvent(self, event):        
@@ -133,38 +135,124 @@ class MYP2(QMainWindow):
             NONE
                
     def runThreadReadLine(self): 
-        idx = 0 
+        MN1 = 60
+        MN2 =120
+        MN10 = 600
+        H1 = 3600
+        H24 = H1 *2
+        self.enAcquisition = 0
         while(self.t1State==1):
-            if self.startLogSate == 1 :  
                 try:             
-                    ExtStrLine = (str)(self.dut.rLineCom())
-                    if len(ExtStrLine) !=0:
-                        if ExtStrLine !="OK\r\n":
+                    self.ExtStrLine = (str)(self.dut.rLineCom())
+                    if len(self.ExtStrLine) !=0:
+                        if self.ExtStrLine !="OK\r\n":
                             self.t1 = time.time()
-                            idx +=1
-                            IPS = self.powerSupply.measI()
-                            VPS = self.powerSupply.measV()                        
-                            fileStr = ""
-                            fileStr = str(self.t1)+ ";" + str(self.depolState)+ ";" + str(VPS)+ ";" + str(IPS)+ ";" + ExtStrLine
-                            self.ExtractLogFile = open(self.logFileName, "a")
-                            self.ExtractLogFile.writelines(fileStr)
-                            self.ExtractLogFile.close()                         
+                            self.enAcquisition = 0
+                            self.extractExtStrLine(valStr = self.ExtStrLine)
+# puis, échantillonnage de 1 mn pendant 1 heure
+# puis échantillonnage de 10 mn pendant 24h
+# puis échantillonnage de 1h le reste du temps. 
+                            if self.startLogSate == 1 :
+                                if self.t1 < (self.tpol + MN2):
+                                    # au moment de la transition : échantillonnage de 0.1 s pendant 2 mn
+                                    self.enAcquisition = 1
+                                    self.t2 = self.t1
+                                else:
+                                    if self.t1 >= self.t2 :
+                                        self.enAcquisition = 1
+                                        if self.t1 >= self.tpol + H24 :
+                                        # puis échantillonnage de 1h le reste du temps. 
+                                            self.t2 = self.t1 + H1
+                                        elif self.t1 >=  self.tpol + H1 :
+                                        # puis échantillonnage de 10 mn pendant 24h
+                                            self.t2 = self.t1 + MN10
+                                        else :
+                                        # puis, échantillonnage de 1 mn pendant 1 heure
+                                            self.t2 = self.t1 + MN1                               
+                                if self.enAcquisition == 1:
+                                    self.measXPS()                       
+                                    self.guiMeasTabToLogFile()
+                                    self.enAcquisition = 0 
+                            else:
+                                self.dut.flushCom() 
                 except:
-                    self.dut.flushCom() 
-                    try:
-                        self.ExtractLogFile.close() 
-                    except:
-                        NONE 
-            else:
-                idx = 0
-                self.dut.flushCom()  
-                  
-    def runtimerPlotrefresh(self):
-        self.powerSupply.displayMeas()
+                    self.dut.flushCom()   
+             
+    def guiMeasTabToLogFile(self):
         try:
-            NONE
+            fileStr = str(time.ctime(self.t1))+ ";" + str(self.depolState)+ ";"  \
+                                                + str(self.guiMeas["VPS"])+ ";" \
+                                                + str(self.guiMeas["IPS"])+ ";" \
+                                                + str(self.guiMeas["V1"])+ ";" \
+                                                + str(self.guiMeas["V2"])+ ";" \
+                                                + str(self.guiMeas["V3"])+ ";" \
+                                                + str(self.guiMeas["V4"])+ ";" \
+                                                + str(self.guiMeas["V5"])+ ";" \
+                                                + str(self.guiMeas["V6"])+ ";" \
+                                                + str(self.guiMeas["I1"])+ ";" \
+                                                + str(self.guiMeas["I2"])+ ";" \
+                                                + str(self.guiMeas["I3"])+ ";" \
+                                                + str(self.guiMeas["I4"])+ ";" \
+                                                + str(self.guiMeas["I5"])+ ";" \
+                                                + str(self.guiMeas["I6"])+ "\r"                                  
+            self.ExtractLogFile = open(self.logFileName, "a")
+            self.ExtractLogFile.writelines(fileStr)
+            self.ExtractLogFile.close()                                 
+        except:
+            try:
+                self.ExtractLogFile.close() 
+            except:
+                NONE 
+            
+    def measXPS(self): 
+        self.guiMeas["IPS"] = self.powerSupply.measI()
+        self.guiMeas["VPS"] = self.powerSupply.measV()         
+             
+    def runtimerPlotrefresh(self):
+        if self.enAcquisition == 0:
+            self.powerSupply.displayMeas()
+            self.extractExtStrLine(valStr = self.ExtStrLine)
+            self.updateLCD()
+            try:
+                self.time = self.time[1:]
+                self.time.append(self.time[-1] + 1)
+                self.tabmV1 = self.tabmV1[1:]
+                self.tabmV1.append(self.guiMeas["V1"])
+                self.linemV1.setData(self.time, self.tabmV1)
+            except:
+                NONE
+                
+    def extractExtStrLine(self, valStr = ""): 
+        try:
+            tabStrVal = valStr.split(';', 12)    
+            idx = 0     
+            self.guiMeas["V1"]=float(tabStrVal[idx+1])
+            self.guiMeas["V2"]=float(tabStrVal[idx+2])
+            self.guiMeas["V3"]=float(tabStrVal[idx+3])
+            self.guiMeas["V4"]=float(tabStrVal[idx+4])
+            self.guiMeas["V5"]=float(tabStrVal[idx+5])
+            self.guiMeas["V6"]=float(tabStrVal[idx+6])
+            self.guiMeas["I1"]=float(tabStrVal[idx+7])
+            self.guiMeas["I2"]=float(tabStrVal[idx+8])
+            self.guiMeas["I3"]=float(tabStrVal[idx+9])
+            self.guiMeas["I4"]=float(tabStrVal[idx+10])
+            self.guiMeas["I5"]=float(tabStrVal[idx+11])
+            self.guiMeas["I6"]=float(tabStrVal[idx+12]) 
         except:
             NONE
+         
+    def updateLCD(self):
+        self.vm2.lcd.display(self.guiMeas["V2"])
+        self.vm3.lcd.display(self.guiMeas["V3"])
+        self.vm4.lcd.display(self.guiMeas["V4"])
+        self.vm5.lcd.display(self.guiMeas["V5"])
+        self.vm6.lcd.display(self.guiMeas["V6"])
+        self.am1.lcd.display(self.guiMeas["I1"])
+        self.am2.lcd.display(self.guiMeas["I2"])
+        self.am3.lcd.display(self.guiMeas["I3"])
+        self.am4.lcd.display(self.guiMeas["I4"])
+        self.am5.lcd.display(self.guiMeas["I5"])
+        self.am6.lcd.display(self.guiMeas["I6"])     
     
     def loadJsonConf(self):
         self.projectName = self.jsonConf.GetJsonParam(name="Project")
@@ -197,11 +285,12 @@ class MYP2(QMainWindow):
         self.ExtractLogFileName = file[0]
         if not os.path.exists(self.ExtractLogFileName):
             self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-            self.strLine = "time;polarState;VPS;IPS;TomoIdx;V1;V2;V3;V4;V5;V6;I1;I2;I3;I4;I5;I6\r"
+            self.strLine = "time;polarState;VPS;IPS;V1;V2;V3;V4;V5;V6;I1;I2;I3;I4;I5;I6\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
         
     def startStopLog(self):
+        self.tpol = time.time() 
         if self.startLogSate == 0: # start log et acuquiition
             self.btnStartStop.setText("STOP LOG")
             pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
@@ -213,7 +302,7 @@ class MYP2(QMainWindow):
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
             self.btnStartStop.setPalette(pal)
             self.startLogSate = 0
-            self.dut.stopP2Pilote()
+            #self.dut.stopP2Pilote()
         
     def polDepol(self):   
         self.tpol = time.time()   
@@ -235,20 +324,28 @@ class MYP2(QMainWindow):
             self.P2State = 0
             self.textEditTerminal.append("Stop P2 Program")
             self.textEditTerminal.append("Start TOMO Program")
-            self.btnEnSeqU.setText("Enable P2 Prg.")
+            self.btnEnSeqU.setText("Enable P2 Pilote Prg.")
             self.dut.setP2toTomo()
         else:
             self.P2State = 1
             self.textEditTerminal.append("Stop TOMO Program")
-            self.textEditTerminal.append("Start P2 Program")
+            self.textEditTerminal.append("Start P2Pilote Program")
             self.btnEnSeqU.setText("Enable Tomo Prg.")
-            self.dut.setTomotoP2()
+            self.dut.setTomotoP2Pilote()
+        time.sleep(2)
+        del(self.dut)
+        del(self.dut)
+        self.initState = 0 
+        self.t1State = 0
+        self.initDut()   
+            
        
     def setCal(self):
-        if self.t1State == 0:
-            self.textEditTerminal.append("Set calibration")
-            self.dut.setCal()
-            self.displayMeas()
+        self.dut.stopP2Pilote()
+        self.textEditTerminal.append("Set calibration")
+        self.dut.setCal()
+        self.displayMeas()
+        self.dut.startP2Pilote()
             
     def startSourceTaskThreadReadLine(self):  
         if self.initState == 1:
@@ -278,9 +375,10 @@ class MYP2(QMainWindow):
                 print(ExtStrLine)
                 
     def initPiloteGui(self): 
+        self.guiMeas ={}
         self.loadJsonConf()
         self.initDut()
-        
+        self.tpol = time.time() 
         if self.startLogSate == 1: # polarisattion state
             self.btnStartStop.setText("STOP LOG")
             pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
@@ -347,6 +445,7 @@ class MYP2(QMainWindow):
                 self.btnConnect.setText("Disconnect")
                 pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
                 self.btnConnect.setPalette(pal) 
+                self.startThreadReadLine()
         else:
             if self.t1State == 1:
                 try:
@@ -373,18 +472,22 @@ class MYP2(QMainWindow):
         if self.t1State == 0:
             self.textEditTerminal.append("Get measure")
             self.dut.setAcquireP2Pilote()
-            self.vm1.lcd.display(self.dut.getMeas("V1"))
-            self.vm2.lcd.display(self.dut.getMeas("V2"))
-            self.vm3.lcd.display(self.dut.getMeas("V3"))
-            self.vm4.lcd.display(self.dut.getMeas("V4"))
-            self.vm5.lcd.display(self.dut.getMeas("V5"))
-            self.vm6.lcd.display(self.dut.getMeas("V6"))
-            self.am1.lcd.display(self.dut.getMeas("I1"))
-            self.am2.lcd.display(self.dut.getMeas("I2"))
-            self.am3.lcd.display(self.dut.getMeas("I3"))
-            self.am4.lcd.display(self.dut.getMeas("I4"))
-            self.am5.lcd.display(self.dut.getMeas("I5"))
-            self.am6.lcd.display(self.dut.getMeas("I6"))      
+            self.guiMeas["V1"]=self.dut.getMeas("V1")
+            self.guiMeas["V2"]=self.dut.getMeas("V2")
+            self.guiMeas["V3"]=self.dut.getMeas("V3")
+            self.guiMeas["V4"]=self.dut.getMeas("V4")
+            self.guiMeas["V5"]=self.dut.getMeas("V5")
+            self.guiMeas["V6"]=self.dut.getMeas("V6")
+            self.guiMeas["I1"]=self.dut.getMeas("I1")
+            self.guiMeas["I2"]=self.dut.getMeas("I2")
+            self.guiMeas["I3"]=self.dut.getMeas("I3")
+            self.guiMeas["I4"]=self.dut.getMeas("I4")
+            self.guiMeas["I5"]=self.dut.getMeas("I5")
+            self.guiMeas["I6"]=self.dut.getMeas("I6")
+            self.updateLCD()
+            self.powerSupply.displayMeas()
+            
+     
     
     def createTerminalGroupBox(self):        
         self.terminalGroupBox = QtWidgets.QGroupBox("Terminal")
@@ -522,12 +625,44 @@ class MYP2(QMainWindow):
         self.btnPoldePol.setDefault(True)
         mainLayout.addWidget(self.btnPoldePol,0,4)
       
-        self.plotGraph = pg.PlotWidget()
-        self.plotGraph.setBackground((53, 53, 53))
-        mainLayout.addWidget(self.plotGraph,1,0,1,5)
+        self.plotmV = pg.PlotWidget()
+        self.plotmV.setBackground((53, 53, 53))
+        pen = pg.mkPen(color=(255, 0, 0))
+        styles = {"color": "grey", "font-size": "18px"}
+        self.plotmV.setLabel("left", "Voltage [mV]", **styles)
+        #self.plotmV.setLabel("bottom", "Time [sec]", **styles)
+        self.plotmV.addLegend()
+        self.plotmV.showGrid(x=True, y=True)
+        self.plotmV.setYRange(-3, 3)
+        self.time = list(range(1000))
+        self.tabmV1 = list(range(1000))
+        self.linemV1 = self.plotmV.plot(
+            self.time,
+            self.tabmV1,
+            name="V1",
+            pen=pen,
+            symbol="+",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        
+        self.plotmA = pg.PlotWidget()
+        self.plotmA.setBackground((53, 53, 53))
+        pen = pg.mkPen(color=(255, 0, 0))
+        styles = {"color": "grey", "font-size": "18px"}
+        self.plotmA.setLabel("left", "Current [mA]", **styles)
+        self.plotmA.setLabel("bottom", "Time [sec]", **styles)
+        self.plotmA.addLegend()
+        self.plotmA.showGrid(x=True, y=True)
+        self.plotmA.setYRange(-3, 3)
+        
+        
+        mainLayout.addWidget(self.plotmV,1,0,1,5)
+        mainLayout.addWidget(self.plotmA,2,0,1,5)
         time = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        temperature = [30, 32, 34, 32, 33, 31, 29, 32, 35, 30]
-        self.plotGraph.plot(time, temperature)
+        voltage = [1.1,2,2.5,0,-0.5,0.75,-1.1,2,2.5,0]
+        
+        self.plotmA.plot(time, voltage)
     
         mainLayout.setRowStretch(0,2)
         mainLayout.setColumnStretch(3, 3)
