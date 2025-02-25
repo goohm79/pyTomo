@@ -1,0 +1,3 @@
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="TOMO_COM", NAME+="TOMO_COM", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="103e", ATTRS{idProduct}=="0424", SYMLINK+="PL303_COM", NAME+="PL303_COM", MODE="0666"
+

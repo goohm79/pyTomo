@@ -116,7 +116,7 @@ class MYP2(QMainWindow):
                 self.t1State=1
                 self.t1.start()                
                 self.timer = QTimer()
-                self.timer.setInterval(500)
+                self.timer.setInterval(200)
                 self.timer.timeout.connect(self.runtimerPlotrefresh)
                 self.timer.start() 
             except:
@@ -140,6 +140,8 @@ class MYP2(QMainWindow):
         MN10 = 600
         H1 = 3600
         H24 = H1 *2
+        SamplePeriod = 0.1
+        self.countAcquisition = 0
         self.enAcquisition = 0
         while(self.t1State==1):
                 try:             
@@ -149,6 +151,8 @@ class MYP2(QMainWindow):
                             self.t1 = time.time()
                             self.enAcquisition = 0
                             self.extractExtStrLine(valStr = self.ExtStrLine)
+                            self.countAcquisition = self.countAcquisition + SamplePeriod
+                            
 # puis, échantillonnage de 1 mn pendant 1 heure
 # puis échantillonnage de 10 mn pendant 24h
 # puis échantillonnage de 1h le reste du temps. 
@@ -173,8 +177,8 @@ class MYP2(QMainWindow):
                                     self.measXPS()                       
                                     self.guiMeasTabToLogFile()
                                     self.enAcquisition = 0 
-                            else:
-                                self.dut.flushCom() 
+                        else:
+                            self.dut.flushCom() 
                 except:
                     self.dut.flushCom()   
              
@@ -209,19 +213,68 @@ class MYP2(QMainWindow):
         self.guiMeas["VPS"] = self.powerSupply.measV()         
              
     def runtimerPlotrefresh(self):
+        self.appendChrono() 
+        self.updateLCD()                
         if self.enAcquisition == 0:
             self.powerSupply.displayMeas()
-            self.extractExtStrLine(valStr = self.ExtStrLine)
-            self.updateLCD()
-            try:
-                self.time = self.time[1:]
-                self.time.append(self.time[-1] + 1)
-                self.tabmV1 = self.tabmV1[1:]
-                self.tabmV1.append(self.guiMeas["V1"])
-                self.linemV1.setData(self.time, self.tabmV1)
-            except:
-                NONE
-                
+            #self.extractExtStrLine(valStr = self.ExtStrLine)
+            
+    def appendChrono(self):
+        try:
+            self.time = self.time[1:]
+            self.time.append(self.countAcquisition)
+            
+            self.tabmV1 = self.tabmV1[1:]
+            self.tabmV1.append(self.guiMeas["V1"])
+            self.linemV1.setData(x=self.time, y=self.tabmV1)
+            
+            self.tabmV2 = self.tabmV2[1:]
+            self.tabmV2.append(self.guiMeas["V2"])
+            self.linemV2.setData(self.time, self.tabmV2)
+            
+            self.tabmV3 = self.tabmV3[1:]
+            self.tabmV3.append(self.guiMeas["V3"])
+            self.linemV3.setData(self.time, self.tabmV3)
+            
+            self.tabmV4 = self.tabmV4[1:]
+            self.tabmV4.append(self.guiMeas["V4"])
+            self.linemV4.setData(self.time, self.tabmV4)
+            
+            self.tabmV5 = self.tabmV5[1:]
+            self.tabmV5.append(self.guiMeas["V5"])
+            self.linemV5.setData(self.time, self.tabmV5)
+            
+            self.tabmV6 = self.tabmV6[1:]
+            self.tabmV6.append(self.guiMeas["V6"])
+            self.linemV6.setData(self.time, self.tabmV6)
+            
+            
+            self.tabmI1 = self.tabmI1[1:]
+            self.tabmI1.append(self.guiMeas["I1"])
+            self.linemI1.setData(self.time, self.tabmI1)
+            
+            self.tabmI2 = self.tabmI2[1:]
+            self.tabmI2.append(self.guiMeas["I2"])
+            self.linemI2.setData(self.time, self.tabmI2)
+            
+            self.tabmI3 = self.tabmI3[1:]
+            self.tabmI3.append(self.guiMeas["I3"])
+            self.linemI3.setData(self.time, self.tabmI3)
+            
+            self.tabmI4 = self.tabmI4[1:]
+            self.tabmI4.append(self.guiMeas["I4"])
+            self.linemI4.setData(self.time, self.tabmI4)
+            
+            self.tabmI5 = self.tabmI5[1:]
+            self.tabmI5.append(self.guiMeas["I5"])
+            self.linemI5.setData(self.time, self.tabmI5)
+            
+            self.tabmI6 = self.tabmI6[1:]
+            self.tabmI6.append(self.guiMeas["I6"])
+            self.linemI6.setData(self.time, self.tabmI6)
+        except:
+            NONE     
+               
     def extractExtStrLine(self, valStr = ""): 
         try:
             tabStrVal = valStr.split(';', 12)    
@@ -242,6 +295,7 @@ class MYP2(QMainWindow):
             NONE
          
     def updateLCD(self):
+        self.vm1.lcd.display(self.guiMeas["V1"])
         self.vm2.lcd.display(self.guiMeas["V2"])
         self.vm3.lcd.display(self.guiMeas["V3"])
         self.vm4.lcd.display(self.guiMeas["V4"])
@@ -378,6 +432,7 @@ class MYP2(QMainWindow):
         self.guiMeas ={}
         self.loadJsonConf()
         self.initDut()
+        self.countAcquisition = 0
         self.tpol = time.time() 
         if self.startLogSate == 1: # polarisattion state
             self.btnStartStop.setText("STOP LOG")
@@ -625,23 +680,80 @@ class MYP2(QMainWindow):
         self.btnPoldePol.setDefault(True)
         mainLayout.addWidget(self.btnPoldePol,0,4)
       
+        plotRange = 500
         self.plotmV = pg.PlotWidget()
         self.plotmV.setBackground((53, 53, 53))
-        pen = pg.mkPen(color=(255, 0, 0))
+        
         styles = {"color": "grey", "font-size": "18px"}
         self.plotmV.setLabel("left", "Voltage [mV]", **styles)
         #self.plotmV.setLabel("bottom", "Time [sec]", **styles)
         self.plotmV.addLegend()
         self.plotmV.showGrid(x=True, y=True)
-        self.plotmV.setYRange(-3, 3)
-        self.time = list(range(1000))
-        self.tabmV1 = list(range(1000))
+        self.plotmV.setYRange(-3000, 3000)
+        self.time = list(range(plotRange))
+        pen = pg.mkPen(color=(255, 0, 0))
+        self.tabmV1 = list(range(plotRange))
         self.linemV1 = self.plotmV.plot(
             self.time,
             self.tabmV1,
             name="V1",
             pen=pen,
-            symbol="+",
+            symbol="o",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(0, 255, 0))
+        self.tabmV2 = list(range(plotRange))
+        self.linemV2 = self.plotmV.plot(
+            self.time,
+            self.tabmV2,
+            name="V2",
+            pen=pen,
+            symbol="t",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(0, 0, 255))
+        self.tabmV3 = list(range(plotRange))
+        self.linemV3 = self.plotmV.plot(
+            self.time,
+            self.tabmV3,
+            name="V3",
+            pen=pen,
+            symbol="t1",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(255, 0, 255))
+        self.tabmV4 = list(range(plotRange))
+        self.linemV4 = self.plotmV.plot(
+            self.time,
+            self.tabmV4,
+            name="V4",
+            pen=pen,
+            symbol="t2",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(255, 255, 255))
+        self.tabmV5 = list(range(plotRange))
+        self.linemV5 = self.plotmV.plot(
+            self.time,
+            self.tabmV5,
+            name="V5",
+            pen=pen,
+            symbol="t3",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(250, 237, 39))
+        self.tabmV6 = list(range(plotRange))
+        self.linemV6 = self.plotmV.plot(
+            self.time,
+            self.tabmV6,
+            name="V6",
+            pen=pen,
+            symbol="s",
             symbolSize=1,
             symbolBrush="g",
         )
@@ -654,16 +766,79 @@ class MYP2(QMainWindow):
         self.plotmA.setLabel("bottom", "Time [sec]", **styles)
         self.plotmA.addLegend()
         self.plotmA.showGrid(x=True, y=True)
-        self.plotmA.setYRange(-3, 3)
+        self.plotmA.setYRange(0, 3000)
+        
+        pen = pg.mkPen(color=(255, 0, 0))
+        self.tabmI1 = list(range(plotRange))
+        self.linemI1 = self.plotmA.plot(
+            self.time,
+            self.tabmI1,
+            name="I1",
+            pen=pen,
+            symbol="o",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(0, 255, 0))
+        self.tabmI2 = list(range(plotRange))
+        self.linemI2 = self.plotmA.plot(
+            self.time,
+            self.tabmI2,
+            name="I2",
+            pen=pen,
+            symbol="t",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(0, 0, 255))
+        self.tabmI3 = list(range(plotRange))
+        self.linemI3 = self.plotmA.plot(
+            self.time,
+            self.tabmI3,
+            name="I3",
+            pen=pen,
+            symbol="t1",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(255, 0, 255))
+        self.tabmI4 = list(range(plotRange))
+        self.linemI4 = self.plotmA.plot(
+            self.time,
+            self.tabmI4,
+            name="I4",
+            pen=pen,
+            symbol="t2",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(255, 255, 255))
+        self.tabmI5 = list(range(plotRange))
+        self.linemI5 = self.plotmA.plot(
+            self.time,
+            self.tabmI5,
+            name="I5",
+            pen=pen,
+            symbol="t3",
+            symbolSize=1,
+            symbolBrush="g",
+        )
+        pen = pg.mkPen(color=(250, 237, 39))
+        self.tabmI6 = list(range(plotRange))
+        self.linemI6 = self.plotmA.plot(
+            self.time,
+            self.tabmI6,
+            name="I6",
+            pen=pen,
+            symbol="s",
+            symbolSize=0.2,
+            symbolBrush="g",
+        )        
         
         
         mainLayout.addWidget(self.plotmV,1,0,1,5)
         mainLayout.addWidget(self.plotmA,2,0,1,5)
-        time = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        voltage = [1.1,2,2.5,0,-0.5,0.75,-1.1,2,2.5,0]
-        
-        self.plotmA.plot(time, voltage)
-    
+       
         mainLayout.setRowStretch(0,2)
         mainLayout.setColumnStretch(3, 3)
         self.P2PiloteGroupBox.setLayout(mainLayout)        
