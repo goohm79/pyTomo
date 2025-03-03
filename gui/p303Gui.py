@@ -56,10 +56,10 @@ class PL303GUI(QtWidgets.QWidget):
         self.connect(self.btnOnOff, SIGNAL("clicked()"),self.onOfflock)
         self.connect(self.btnSet, SIGNAL("clicked()"),self.set)
         
-        self.timer = QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.displayMeas)
-        self.timer.start() 
+        #self.timer = QTimer()
+        #self.timer.setInterval(500)
+        #self.timer.timeout.connect(self.displayMeas)
+        #self.timer.start() 
 
         
     def __del__(self):
@@ -121,15 +121,21 @@ class PL303GUI(QtWidgets.QWidget):
         self.ps.Set(fct='V', val=self.v.getVal())
         self.ps.Set(fct='I', val=self.i.getVal())   
     
-    def measV(self):  
+    def measV(self): 
         return  self.ps.Meas("V")       
     
     def measI(self): 
-        return self.ps.Meas("I")
+        return self.ps.Meas("I") 
         
     def displayMeas(self):        
         self.vm.lcd.display(self.measV())
         self.im.lcd.display(self.measI())
+    
+    def displayVm(self, v=0):        
+        self.vm.lcd.display(v)
+    
+    def displayIm(self, i=0):        
+        self.im.lcd.display(i)  
         
     def createPL303GroupBox(self):
         self.PL303GroupBox = QtWidgets.QGroupBox("Power Supply [PL303-P]")

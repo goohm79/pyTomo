@@ -96,6 +96,10 @@ class MYP2(QMainWindow):
         self.connect(self.btnStartStop, SIGNAL("clicked()"),self.startStopLog)  
         self.connect(self.btnPoldePol, SIGNAL("clicked()"),self.polDepol)
         
+        self.timer = QTimer()
+        self.timer.setInterval(500)
+        self.timer.timeout.connect(self.runtimerPlotrefresh)
+        
         self.initPiloteGui()
         
 
@@ -115,10 +119,7 @@ class MYP2(QMainWindow):
                 self.t1 = threading.Thread(target=self.runThreadReadLine)
                 self.t1State=1
                 self.t1.start()                
-                self.timer = QTimer()
-                self.timer.setInterval(200)
-                self.timer.timeout.connect(self.runtimerPlotrefresh)
-                self.timer.start() 
+                
             except:
                 self.t1State=0
         
@@ -149,6 +150,7 @@ class MYP2(QMainWindow):
                     if len(self.ExtStrLine) !=0:
                         if self.ExtStrLine !="OK\r\n":
                             self.t1 = time.time()
+                            self.measXPS()  
                             self.enAcquisition = 0
                             self.extractExtStrLine(valStr = self.ExtStrLine)
                             self.countAcquisition = self.countAcquisition + SamplePeriod
@@ -173,8 +175,8 @@ class MYP2(QMainWindow):
                                         else :
                                         # puis, échantillonnage de 1 mn pendant 1 heure
                                             self.t2 = self.t1 + MN1                               
-                                if self.enAcquisition == 1:
-                                    self.measXPS()                       
+                                if self.enAcquisition == 1:  
+                                                       
                                     self.guiMeasTabToLogFile()
                                     self.enAcquisition = 0 
                         else:
@@ -210,14 +212,15 @@ class MYP2(QMainWindow):
             
     def measXPS(self): 
         self.guiMeas["IPS"] = self.powerSupply.measI()
-        self.guiMeas["VPS"] = self.powerSupply.measV()         
+        self.guiMeas["VPS"] = self.powerSupply.measV()   
+     
              
     def runtimerPlotrefresh(self):
         self.appendChrono() 
-        self.updateLCD()                
-        if self.enAcquisition == 0:
-            self.powerSupply.displayMeas()
-            #self.extractExtStrLine(valStr = self.ExtStrLine)
+        self.updateLCD()    
+        self.powerSupply.displayVm(v=self.guiMeas["VPS"]) 
+        self.powerSupply.displayIm(i=self.guiMeas["IPS"])          
+        
             
     def appendChrono(self):
         try:
@@ -350,7 +353,7 @@ class MYP2(QMainWindow):
             pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
             self.btnStartStop.setPalette(pal)            
             self.startLogSate = 1
-            self.dut.startP2Pilote()
+            
         else: # stop
             self.btnStartStop.setText("START LOG")
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
@@ -431,19 +434,19 @@ class MYP2(QMainWindow):
     def initPiloteGui(self): 
         self.guiMeas ={}
         self.loadJsonConf()
+        self.initState = 0  
+        self.t1State = 0 
         self.initDut()
         self.countAcquisition = 0
         self.tpol = time.time() 
         if self.startLogSate == 1: # polarisattion state
             self.btnStartStop.setText("STOP LOG")
             pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
-            self.btnStartStop.setPalette(pal)  
-            self.dut.startP2Pilote()          
+            self.btnStartStop.setPalette(pal)          
         else: # polarisattion state
             self.btnStartStop.setText("START LOG")
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
             self.btnStartStop.setPalette(pal)
-            self.dut.stopP2Pilote()
             
         if self.depolState == 1: # polarisation state
             self.btnPoldePol.setText("SET DEPOL")
@@ -457,7 +460,8 @@ class MYP2(QMainWindow):
             self.powerSupply.SetonOff(state=0)
 
         self.powerSupply.setVI(v=self.Vlim, i=self.Ilim)
-        self.powerSupply.SetonOff(state= self.StatePS)
+        self.powerSupply.SetonOff(state= self.StatePS)       
+        
         self.initState = 1
               
     def initDut(self):   
@@ -469,7 +473,13 @@ class MYP2(QMainWindow):
         if self.initState == 0 and self.t1State == 0:
             self.initState = 1
             try: 
-                self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
+                n = 1
+                while n < 10:
+                    try:
+                        self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
+                        n = 10
+                    except:
+                        n = n + 1
                 self.textEditTerminal.append("Connected to: " + "/dev/TOMO_COM")
                 self.dut.stopP2Pilote()
                 try:          
@@ -496,14 +506,17 @@ class MYP2(QMainWindow):
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
                 self.ledPL303.setPalette(pal)
             
-            if self.initState == 1:      
+            if self.initState == 1:  
+                self.dut.startP2Pilote()    
                 self.btnConnect.setText("Disconnect")
                 pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
                 self.btnConnect.setPalette(pal) 
+                self.timer.start() 
                 self.startThreadReadLine()
         else:
             if self.t1State == 1:
                 try:
+                    self.timer.stop() 
                     self.stopThreadReadLine()
                 except:
                     self.t1State = 0
@@ -680,7 +693,7 @@ class MYP2(QMainWindow):
         self.btnPoldePol.setDefault(True)
         mainLayout.addWidget(self.btnPoldePol,0,4)
       
-        plotRange = 500
+        self.plotRange = 500
         self.plotmV = pg.PlotWidget()
         self.plotmV.setBackground((53, 53, 53))
         
@@ -690,9 +703,11 @@ class MYP2(QMainWindow):
         self.plotmV.addLegend()
         self.plotmV.showGrid(x=True, y=True)
         self.plotmV.setYRange(-3000, 3000)
-        self.time = list(range(plotRange))
+        self.time = []
+        self.clearTabmList(tab=self.time)
         pen = pg.mkPen(color=(255, 0, 0))
-        self.tabmV1 = list(range(plotRange))
+        self.tabmV1 = []
+        self.clearTabmList(tab=self.tabmV1)
         self.linemV1 = self.plotmV.plot(
             self.time,
             self.tabmV1,
@@ -703,7 +718,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(0, 255, 0))
-        self.tabmV2 = list(range(plotRange))
+        self.tabmV2 = []
+        self.clearTabmList(tab=self.tabmV2)
         self.linemV2 = self.plotmV.plot(
             self.time,
             self.tabmV2,
@@ -714,7 +730,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(0, 0, 255))
-        self.tabmV3 = list(range(plotRange))
+        self.tabmV3 = []
+        self.clearTabmList(tab=self.tabmV3)
         self.linemV3 = self.plotmV.plot(
             self.time,
             self.tabmV3,
@@ -725,7 +742,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(255, 0, 255))
-        self.tabmV4 = list(range(plotRange))
+        self.tabmV4 = []
+        self.clearTabmList(tab=self.tabmV4)
         self.linemV4 = self.plotmV.plot(
             self.time,
             self.tabmV4,
@@ -736,7 +754,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(255, 255, 255))
-        self.tabmV5 = list(range(plotRange))
+        self.tabmV5 = []
+        self.clearTabmList(tab=self.tabmV5)
         self.linemV5 = self.plotmV.plot(
             self.time,
             self.tabmV5,
@@ -747,7 +766,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(250, 237, 39))
-        self.tabmV6 = list(range(plotRange))
+        self.tabmV6 = []
+        self.clearTabmList(tab=self.tabmV6)
         self.linemV6 = self.plotmV.plot(
             self.time,
             self.tabmV6,
@@ -769,7 +789,8 @@ class MYP2(QMainWindow):
         self.plotmA.setYRange(0, 3000)
         
         pen = pg.mkPen(color=(255, 0, 0))
-        self.tabmI1 = list(range(plotRange))
+        self.tabmI1 = []
+        self.clearTabmList(tab=self.tabmI1)
         self.linemI1 = self.plotmA.plot(
             self.time,
             self.tabmI1,
@@ -780,7 +801,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(0, 255, 0))
-        self.tabmI2 = list(range(plotRange))
+        self.tabmI2 = []
+        self.clearTabmList(tab=self.tabmI2)
         self.linemI2 = self.plotmA.plot(
             self.time,
             self.tabmI2,
@@ -791,7 +813,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(0, 0, 255))
-        self.tabmI3 = list(range(plotRange))
+        self.tabmI3 = []
+        self.clearTabmList(tab=self.tabmI3)
         self.linemI3 = self.plotmA.plot(
             self.time,
             self.tabmI3,
@@ -802,7 +825,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(255, 0, 255))
-        self.tabmI4 = list(range(plotRange))
+        self.tabmI4 = []
+        self.clearTabmList(tab=self.tabmI4)
         self.linemI4 = self.plotmA.plot(
             self.time,
             self.tabmI4,
@@ -813,7 +837,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(255, 255, 255))
-        self.tabmI5 = list(range(plotRange))
+        self.tabmI5 = []
+        self.clearTabmList(tab=self.tabmI5)
         self.linemI5 = self.plotmA.plot(
             self.time,
             self.tabmI5,
@@ -824,7 +849,8 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )
         pen = pg.mkPen(color=(250, 237, 39))
-        self.tabmI6 = list(range(plotRange))
+        self.tabmI6 = []
+        self.clearTabmList(tab=self.tabmI6)
         self.linemI6 = self.plotmA.plot(
             self.time,
             self.tabmI6,
@@ -835,13 +861,19 @@ class MYP2(QMainWindow):
             symbolBrush="g",
         )        
         
-        
+      
         mainLayout.addWidget(self.plotmV,1,0,1,5)
         mainLayout.addWidget(self.plotmA,2,0,1,5)
+        self.linemI6.clear()
        
         mainLayout.setRowStretch(0,2)
         mainLayout.setColumnStretch(3, 3)
-        self.P2PiloteGroupBox.setLayout(mainLayout)        
+        self.P2PiloteGroupBox.setLayout(mainLayout)      
+        
+    def clearTabmList (self, tab = []):
+            for i in range(self.plotRange):
+                tab.append(0)
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 
