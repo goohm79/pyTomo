@@ -3,6 +3,7 @@ import time
 import os.path
 import threading
 import datetime
+from datetime import datetime
 
 from ate.tomo import TOMO1S12V2I
 
@@ -151,6 +152,7 @@ class MYP2(QMainWindow):
                     if len(self.ExtStrLine) !=0:
                         if self.ExtStrLine !="OK\r\n":
                             self.t1 = time.time()
+                            self.tlog = datetime.now()
                             try:
                                 self.measXPS()  
                             except:
@@ -190,7 +192,7 @@ class MYP2(QMainWindow):
              
     def guiMeasTabToLogFile(self):
         try:
-            fileStr = str(time.ctime(self.t1))+ ";" + str(self.depolState)+ ";"  \
+            fileStr = str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
                                                 + str(self.guiMeas["VPS"])+ ";" \
                                                 + str(self.guiMeas["IPS"])+ ";" \
                                                 + str(self.guiMeas["V1"])+ ";" \
