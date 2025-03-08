@@ -2,7 +2,6 @@ import sys
 import time
 import os.path
 import threading
-import datetime
 from datetime import datetime
 
 from ate.tomo import TOMO1S12V2I
@@ -345,7 +344,7 @@ class MYP2(QMainWindow):
         self.jsonConf.SetJsonParam(name="PL303_State", val=self.StatePS)      
     
     def selectLogFile(self):
-        self.logDateTime = datetime.datetime.now()
+        self.logDateTime = datetime.now()
         self.logFileName = "log_p2Pilote_" + "_date-" + str(self.logDateTime)
         file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
         self.logFileName = file[0]
