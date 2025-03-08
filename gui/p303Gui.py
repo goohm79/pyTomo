@@ -60,11 +60,17 @@ class PL303GUI(QtWidgets.QWidget):
         #self.timer.setInterval(500)
         #self.timer.timeout.connect(self.displayMeas)
         #self.timer.start() 
-
         
     def __del__(self):
         NONE
-    
+        
+    def reInit(self):
+        try:
+            self.ps = PL303(comPort="/dev/PL303_COM")
+            self.ps.Output(self.onOffState) 
+        except:
+            None      
+ 
     def setCom(self): 
         return self.ps.SetCom()
         
@@ -122,10 +128,17 @@ class PL303GUI(QtWidgets.QWidget):
         self.ps.Set(fct='I', val=self.i.getVal())   
     
     def measV(self): 
-        return  self.ps.Meas("V")       
+        ret =  self.ps.Meas("V")  
+        if ret == -1:
+            self.reInit()
+        return ret
+                
     
     def measI(self): 
-        return self.ps.Meas("I") 
+        ret =  self.ps.Meas("I")  
+        if ret == -1:
+            self.reInit()
+        return ret
         
     def displayMeas(self):        
         self.vm.lcd.display(self.measV())

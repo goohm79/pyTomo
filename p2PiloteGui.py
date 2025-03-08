@@ -99,6 +99,7 @@ class MYP2(QMainWindow):
         self.timer = QTimer()
         self.timer.setInterval(500)
         self.timer.timeout.connect(self.runtimerPlotrefresh)
+        self.countTimer = 0
         
         self.initPiloteGui()
         
@@ -150,7 +151,10 @@ class MYP2(QMainWindow):
                     if len(self.ExtStrLine) !=0:
                         if self.ExtStrLine !="OK\r\n":
                             self.t1 = time.time()
-                            self.measXPS()  
+                            try:
+                                self.measXPS()  
+                            except:
+                                None
                             self.enAcquisition = 0
                             self.extractExtStrLine(valStr = self.ExtStrLine)
                             self.countAcquisition = self.countAcquisition + SamplePeriod
@@ -212,14 +216,19 @@ class MYP2(QMainWindow):
             
     def measXPS(self): 
         self.guiMeas["IPS"] = self.powerSupply.measI()
-        self.guiMeas["VPS"] = self.powerSupply.measV()   
+        self.guiMeas["VPS"] = self.powerSupply.measV() 
+
      
              
     def runtimerPlotrefresh(self):
         self.appendChrono() 
         self.updateLCD()    
         self.powerSupply.displayVm(v=self.guiMeas["VPS"]) 
-        self.powerSupply.displayIm(i=self.guiMeas["IPS"])          
+        self.powerSupply.displayIm(i=self.guiMeas["IPS"])  
+        self.countTimer = self.countTimer +1
+        if self.countTimer == 2:
+            self.saveJsonConf() 
+            self.countTimer =  0       
         
             
     def appendChrono(self):
@@ -361,6 +370,7 @@ class MYP2(QMainWindow):
             self.startLogSate = 0
             #self.dut.stopP2Pilote()
         
+        
     def polDepol(self):   
         self.tpol = time.time()   
         if self.depolState == 0: # polarisattion state
@@ -374,7 +384,8 @@ class MYP2(QMainWindow):
             pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
             self.btnPoldePol.setPalette(pal)
             self.powerSupply.SetonOff(state=0) 
-            self.depolState = 0         
+            self.depolState = 0  
+              
         
     def setP2Prog(self):
         if self.P2State  == 1:
@@ -394,7 +405,8 @@ class MYP2(QMainWindow):
         del(self.dut)
         self.initState = 0 
         self.t1State = 0
-        self.initDut()   
+        self.initDut()  
+        
             
        
     def setCal(self):
@@ -473,31 +485,26 @@ class MYP2(QMainWindow):
         if self.initState == 0 and self.t1State == 0:
             self.initState = 1
             try: 
-                n = 1
-                while n < 10:
-                    try:
-                        self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
-                        n = 10
-                    except:
-                        n = n + 1
+                self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
                 self.textEditTerminal.append("Connected to: " + "/dev/TOMO_COM")
-                self.dut.stopP2Pilote()
-                try:          
+                try:   
+                    self.dut.stopP2Pilote()       
                     self.displayMeas()
+                    if self.dut.getP2() == 2:
+                        self.btnEnSeqU.setText("Enable TOMO Prg.")
+                        self.P2State  = 1
+                    else:
+                        self.P2State  = 0
+                        self.btnEnSeqU.setText("Enable P2 Pilote Prg.")
+                    pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
+                    self.ledTomo.setPalette(pal) 
                 except:
-                    None   
-                if self.dut.getP2() == 2:
-                    self.btnEnSeqU.setText("Enable TOMO Prg.")
-                    self.P2State  = 1
-                else:
-                    self.P2State  = 0
-                    self.btnEnSeqU.setText("Enable P2 Pilote Prg.")
-                pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
-                self.ledTomo.setPalette(pal)               
+                    None                   
             except:
                 self.initState = 0
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
-                self.ledTomo.setPalette(pal)              
+                self.ledTomo.setPalette(pal) 
+             
             if self.powerSupply.setCom() == 1:
                 pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
                 self.ledPL303.setPalette(pal)

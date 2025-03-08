@@ -6,6 +6,7 @@
 import serial
 import serial.tools.list_ports
 from datetime import datetime
+import time 
 
 
 
@@ -31,12 +32,16 @@ class TOMO1S12V2I:
     self.SeqU ["TempoMs"] = 1 # tempo ms
     self.SeqU ["Conf"] = 1 # confA
     self.comPort = comPort
-    try:
-        self.com = serial.Serial(port=self.comPort, baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-        self.com.flushInput()
-        self.com.flushOutput()
-    except:
-        print("comPort: " + self.comPort + " could not connected to TOMO1S12V2I")
+    n = 1
+    while n < 20:
+        try:
+            self.com = serial.Serial(port=self.comPort, baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+            self.com.flushInput()
+            self.com.flushOutput()
+            n = 20
+        except:
+            n = n +1
+            print("comPort: " + self.comPort + " could not connected to TOMO1S12V2I")
 
 # Deleting (Calling destructor)
     def __del__(self):
@@ -329,6 +334,7 @@ class TOMO1S12V2I:
         a = strVal.encode('utf-8')
         self.com.write(data=a)
         self.com.flushInput()
+        time.sleep(1)
     except:
       None
 
