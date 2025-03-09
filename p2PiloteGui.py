@@ -192,20 +192,20 @@ class MYP2(QMainWindow):
     def guiMeasTabToLogFile(self):
         try:
             fileStr = str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
-                                                + str(self.guiMeas["VPS"])+ ";" \
-                                                + str(self.guiMeas["IPS"])+ ";" \
-                                                + str(self.guiMeas["V1"])+ ";" \
-                                                + str(self.guiMeas["V2"])+ ";" \
-                                                + str(self.guiMeas["V3"])+ ";" \
-                                                + str(self.guiMeas["V4"])+ ";" \
-                                                + str(self.guiMeas["V5"])+ ";" \
-                                                + str(self.guiMeas["V6"])+ ";" \
-                                                + str(self.guiMeas["I1"])+ ";" \
-                                                + str(self.guiMeas["I2"])+ ";" \
-                                                + str(self.guiMeas["I3"])+ ";" \
-                                                + str(self.guiMeas["I4"])+ ";" \
-                                                + str(self.guiMeas["I5"])+ ";" \
-                                                + str(self.guiMeas["I6"])+ "\r"                                  
+                                                + str("{0:.1f}".format(self.guiMeas["VPS"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["IPS"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["V1"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["V2"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["V3"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["V4"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["V5"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["V6"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["I1"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["I2"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["I3"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["I4"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["I5"]))+ ";" \
+                                                + str("{0:.1f}".format(self.guiMeas["I6"]))+ "\r"                                  
             self.ExtractLogFile = open(self.logFileName, "a")
             self.ExtractLogFile.writelines(fileStr)
             self.ExtractLogFile.close()                                 
