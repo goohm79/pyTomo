@@ -141,7 +141,7 @@ class MYP2(QMainWindow):
         MN2 =120
         MN10 = 600
         H1 = 3600
-        H24 = H1 *2
+        H24 = H1 *24
         SamplePeriod = 0.1
         self.countAcquisition = 0
         self.enAcquisition = 0
@@ -224,8 +224,9 @@ class MYP2(QMainWindow):
     def runtimerPlotrefresh(self):
         self.appendChrono() 
         self.updateLCD()    
-        self.powerSupply.displayVm(v=self.guiMeas["VPS"]) 
-        self.powerSupply.displayIm(i=self.guiMeas["IPS"])  
+        if self.depolState == 1:
+            self.powerSupply.displayVm(v=self.guiMeas["VPS"]) 
+            self.powerSupply.displayIm(i=self.guiMeas["IPS"])  
         self.countTimer = self.countTimer +1
         if self.countTimer == 2:
             self.saveJsonConf() 
@@ -292,21 +293,36 @@ class MYP2(QMainWindow):
         try:
             tabStrVal = valStr.split(';', 12)    
             idx = 0     
-            self.guiMeas["V1"]=float(tabStrVal[idx+1])
-            self.guiMeas["V2"]=float(tabStrVal[idx+2])
-            self.guiMeas["V3"]=float(tabStrVal[idx+3])
-            self.guiMeas["V4"]=float(tabStrVal[idx+4])
-            self.guiMeas["V5"]=float(tabStrVal[idx+5])
-            self.guiMeas["V6"]=float(tabStrVal[idx+6])
-            self.guiMeas["I1"]=float(tabStrVal[idx+7])
-            self.guiMeas["I2"]=float(tabStrVal[idx+8])
-            self.guiMeas["I3"]=float(tabStrVal[idx+9])
-            self.guiMeas["I4"]=float(tabStrVal[idx+10])
-            self.guiMeas["I5"]=float(tabStrVal[idx+11])
-            self.guiMeas["I6"]=float(tabStrVal[idx+12]) 
+            self.guiMeas["V1"]=self.calV(x=float(tabStrVal[idx+1]))
+            self.guiMeas["V2"]=self.calV(x=float(tabStrVal[idx+2]))
+            self.guiMeas["V3"]=self.calV(x=float(tabStrVal[idx+3]))
+            self.guiMeas["V4"]=self.calV(x=float(tabStrVal[idx+4]))
+            self.guiMeas["V5"]=self.calV(x=float(tabStrVal[idx+5]))
+            self.guiMeas["V6"]=self.calV(x=float(tabStrVal[idx+6]))
+            self.guiMeas["I1"]=self.calI(x=float(tabStrVal[idx+7]))
+            self.guiMeas["I2"]=self.calI(x=float(tabStrVal[idx+8]))
+            self.guiMeas["I3"]=self.calI(x=float(tabStrVal[idx+9]))
+            self.guiMeas["I4"]=self.calI(x=float(tabStrVal[idx+10]))
+            self.guiMeas["I5"]=self.calI(x=float(tabStrVal[idx+11]))
+            self.guiMeas["I6"]=self.calI(x=float(tabStrVal[idx+12]))
         except:
             NONE
-         
+    
+    def calV(self, x=0):
+        if x < -25:
+            z = -1 * x / 1000
+            y = -1000*((0.154 * (z**4)) -  (0.373 * (z**3)) + (0.352 * (z**2)) + (0.905 * (z)))          
+        else:
+            y = x
+        return y
+    
+    def calI(self, x=0):
+        if x > 100:
+            y = (5.85037286e-11 * (x**4)) -  (1.5054609175e-7 * (x**3)) + (0.000163975 * (x**2)) + (0.963615 * (x))
+        else:
+            y = x
+        return y
+    
     def updateLCD(self):
         self.vm1.lcd.display(self.guiMeas["V1"])
         self.vm2.lcd.display(self.guiMeas["V2"])
@@ -384,6 +400,8 @@ class MYP2(QMainWindow):
             self.btnPoldePol.setText("SET POL")
             pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
             self.btnPoldePol.setPalette(pal)
+            self.powerSupply.displayVm(v=0) 
+            self.powerSupply.displayIm(i=0) 
             self.powerSupply.SetonOff(state=0) 
             self.depolState = 0  
               
