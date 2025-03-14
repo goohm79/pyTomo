@@ -7,3 +7,82 @@ sudo udevadm control --reload-rules
 
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="TOMO_COM", NAME+="TOMO_COM", MODE="0666"
 SUBSYSTEM=="tyy", ATTRS{idVendor}=="103e", ATTRS{idProduct}=="0424", SYMLINK+="PL303_COM", NAME+="PL303_COM", MODE="0666"
+
+
+
+---------------
+virual env:
+---------------
+sudo apt install python3-venv
+
+python3 -m venv .venv
+
+To activate :
+
+source .venv/bin/activate
+
+Now you can install a library like requests 
+pip install requests
+
+deactivate
+
+
+---------------
+pip packages:
+---------------
+pip install PySide6
+pip install pyqtgraph
+pip install timeloop
+pip install pillow
+pip install pyserial
+pip install pandas
+pip install plotly
+
+
+
+Une autre solution pour placer une commande ou script au démarrage de Linux est de créer un service systemd.
+Cela peut en outre permettre de faire tourner un daemon.
+
+Nous devons créer un descripteur de service, appelé fichier d’unité, dans /etc/systemd/system :
+
+[Unit]
+Description=Service systemd au démarrage Linux
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /chemin/script/reboot_message.sh
+
+[Install]
+WantedBy=multi-user.target
+
+Le fichier est organisé en différentes sections :
+
+    Unit – contient des métadonnées générales, comme une description lisible par l’homme
+    Service – décrit le processus et le comportement de démonisation, ainsi que la commande pour démarrer le service
+    Install – permet au service de s’exécuter au démarrage en utilisant le dossier spécifié dans WantedBy pour gérer les dépendances
+
+Ensuite, nous devons définir les permissions du fichier à 644 et activer notre service à l’aide de systemctl :
+
+chmod 644 /etc/systemd/system/reboot_message.service
+systemctl enable reboot_message.service
+
+
+
+-----------
+
+connection distance
+------------
+
+https://doc.ubuntu-fr.org/tutoriel/acces_a_distance_et_livebox
+sudo systemctl restart gdm3S
+
+sudo systemctl restart gdm3
+
+sudo apt-get install -y libegl1 libdbus-1-3 libxkbcommon-x11-0 \
+     libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+     libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 \
+     x11-utils libxcb-cursor0 libopengl0
+     
+     
+     
+
