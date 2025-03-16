@@ -38,6 +38,7 @@ class PARAMGUI(QtWidgets.QWidget):
         self.listJsonAllParam = ""
         if self.projectParam == "Pilote":
             self.fileName= "paramPilote.json"
+            self.fileNameBackup= "paramPiloteBackup.json"
             self.ReadJsonParam()
         
     def CreatePiloteJsonParam(self):
@@ -52,11 +53,12 @@ class PARAMGUI(QtWidgets.QWidget):
             
               "PL303_Ilim": 1000,
             
-              "PL303_Vlim": 10,
+              "PL303_Vlim": 30,
             
-              "CSVfilePath": "/home/goo/github/pyTomo/Dataslog.csv",
+              "CSVfilePath": "/home/goohm/github/pyTomo/Dataslog.csv",
               },
         with open(self.fileName, mode="w", encoding="utf-8") as write_file: json.dump(newParam, write_file)
+        with open(self.fileNameBackup, mode="w", encoding="utf-8") as write_file: json.dump(newParam, write_file)
              
         
     def SetJsonParam(self, name="", val=""): 
@@ -66,14 +68,24 @@ class PARAMGUI(QtWidgets.QWidget):
     def GetJsonParam (self, name =""): 
         return self.listJsonAllParam[0].get(name)
      
-    def ReadJsonParam(self):           
-        with open(self.fileName, 'r') as f: ret = json.load(f)
-        self.listJsonAllParam = ret
+    def ReadJsonParam(self):   
+        try:        
+            with open(self.fileName, 'r') as f: ret = json.load(f)
+            self.listJsonAllParam = ret
+        except:
+            try:
+                with open(self.fileNameBackup, 'r') as f: ret = json.load(f)
+                self.listJsonAllParam = ret
+                self.WriteJsonParam()
+            except:
+                self.CreatePiloteJsonParam()
+                with open(self.fileName, 'r') as f: ret = json.load(f)
+                self.listJsonAllParam = ret
         return ret
         
     def WriteJsonParam(self):   
         with open(self.fileName, mode="w", encoding="utf-8") as write_file: json.dump(self.listJsonAllParam, write_file)
-            
+        with open(self.fileNameBackup, mode="w", encoding="utf-8") as write_file: json.dump(self.listJsonAllParam, write_file)
         
 
 class DIRECTION(QtWidgets.QWidget):
