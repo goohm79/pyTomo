@@ -43,6 +43,8 @@ class PL303:
                     ret = self.Get('I1?')
                     return float(ret)
                 else:
+                    if val > 2: #protection courant max admissible par le relai
+                        val = 2
                     self.Write('I1 ' + str(val))
 
     def Get(self, val=None):
