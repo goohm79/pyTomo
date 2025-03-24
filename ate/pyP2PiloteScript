@@ -1,0 +1,8 @@
+#!/bin/bash
+# This script will take an animated GIF and delete every other frame
+# Accepts two parameters: input file and output file
+# Usage: ./<scriptfilename> input.gif output.gif
+ 
+source github/pyTomo/venv/bin/activate
+cd github/pyTomo
+python3 p2PiloteGui.py

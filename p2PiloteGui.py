@@ -223,10 +223,13 @@ class MYP2(QMainWindow):
              
     def runtimerPlotrefresh(self):
         self.appendChrono() 
-        self.updateLCD()    
-        if self.depolState == 1:
+        self.updateLCD()              
+        if self.powerSupply.getonOff() == 1:
             self.powerSupply.displayVm(v=self.guiMeas["VPS"]) 
             self.powerSupply.displayIm(i=self.guiMeas["IPS"])  
+        else:
+            self.powerSupply.displayVm(v=0) 
+            self.powerSupply.displayIm(i=0) 
         self.countTimer = self.countTimer +1
         if self.countTimer == 2:
             self.saveJsonConf() 
@@ -396,7 +399,10 @@ class MYP2(QMainWindow):
             self.btnPoldePol.setPalette(pal)  
             self.powerSupply.SetonOff(state=1) 
             self.dut.setActiveZone(ZA=1)      #pilote le relai en CC
-            self.depolState = 1   
+            self.depolState = 1  
+            self.lblStatePol.setText("PILOTE STATE: POLARISATION")
+            pal.setColor(QPalette.WindowText, QColor(49, 140, 231)) 
+            self.lblStatePol.setPalette(pal) 
         else: # polarisattion state
             self.btnPoldePol.setText("SET POL")
             pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
@@ -406,6 +412,9 @@ class MYP2(QMainWindow):
             self.powerSupply.displayIm(i=0) 
             self.powerSupply.SetonOff(state=0) 
             self.depolState = 0  
+            self.lblStatePol.setText("PILOTE STATE: DéPOLARISATION")
+            pal.setColor(QPalette.WindowText, QColor(231, 140, 49))
+            self.lblStatePol.setPalette(pal) 
               
         
     def setP2Prog(self):
@@ -715,6 +724,11 @@ class MYP2(QMainWindow):
         pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
         self.btnStartStop.setPalette(pal)
         
+        self.lblStatePol= QtWidgets.QLabel("PILOTE STATE: DéPOLARISATION")
+        pal.setColor(QPalette.WindowText, QColor(231, 140, 49))
+        self.lblStatePol.setPalette(pal)
+        mainLayout.addWidget(self.lblStatePol,0,3)
+        
         self.btnPoldePol = QtWidgets.QPushButton("SET POL")
         pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
         self.btnPoldePol.setPalette(pal)
@@ -899,8 +913,8 @@ class MYP2(QMainWindow):
         self.P2PiloteGroupBox.setLayout(mainLayout)      
         
     def clearTabmList (self, tab = []):
-            for i in range(self.plotRange):
-                tab.append(0)
+        for i in range(self.plotRange):
+            tab.append(0)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

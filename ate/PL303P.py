@@ -30,6 +30,7 @@ class PL303:
         elif val == 0 or val == 'OFF' or val == 'off' or val == 'Off':
             if self.Write('OP1 0') == 1:
                 self.OutputState = 0
+        
 
     def Set(self, fct=None, val=None):
             if fct == 'V' or fct == 'v':
