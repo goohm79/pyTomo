@@ -52,7 +52,7 @@ class TOMO1S12V2I:
     
   def flushCom(self, data=None):
     self.com.flushInput()
-    self.com.flushOutput()
+    #self.com.flushOutput()
 
   def wCom(self, data=None):
     n = 0
@@ -335,6 +335,28 @@ class TOMO1S12V2I:
         self.com.write(data=a)
         self.com.flushInput()
         time.sleep(1)
+    except:
+      None
+      
+  def setPolP2Pilot(self):
+    try :
+        strVal = "AT+POLP2=1\r\n"
+        self.com.flushInput()
+        self.com.flushOutput()
+        a = strVal.encode('utf-8')
+        self.com.write(data=a)
+        self.com.flushInput()
+    except:
+      None
+
+  def resetPolP2Pilot(self):
+    try :
+        strVal = "AT+POLP2=0\r\n"
+        self.com.flushInput()
+        self.com.flushOutput()
+        a = strVal.encode('utf-8')
+        self.com.write(data=a)
+        self.com.flushInput()
     except:
       None
 

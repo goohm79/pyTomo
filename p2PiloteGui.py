@@ -398,7 +398,7 @@ class MYP2(QMainWindow):
             pal.setColor(QPalette.ButtonText, QColor(231, 140, 49))
             self.btnPoldePol.setPalette(pal)  
             self.powerSupply.SetonOff(state=1) 
-            self.dut.setActiveZone(ZA=3)      #pilote le relai en CC
+            self.dut.setPolP2Pilot()
             self.depolState = 1  
             self.lblStatePol.setText("PILOTE STATE: POLARISATION")
             pal.setColor(QPalette.WindowText, QColor(49, 140, 231)) 
@@ -407,7 +407,7 @@ class MYP2(QMainWindow):
             self.btnPoldePol.setText("SET POL")
             pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
             self.btnPoldePol.setPalette(pal)
-            self.dut.setActiveZone(ZA=0)   #pilote le relai en OPEN
+            self.dut.resetPolP2Pilot()
             self.powerSupply.displayVm(v=0) 
             self.powerSupply.displayIm(i=0) 
             self.powerSupply.SetonOff(state=0) 
