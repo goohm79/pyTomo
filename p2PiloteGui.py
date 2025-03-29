@@ -101,6 +101,10 @@ class MYP2(QMainWindow):
         self.timer.timeout.connect(self.runtimerPlotrefresh)
         self.countTimer = 0
         
+        self.timerXPS = QTimer()
+        self.timerXPS.setInterval(100)
+        self.timerXPS.timeout.connect(self.runtimerXPS)
+        
         self.initPiloteGui()
         
 
@@ -127,6 +131,7 @@ class MYP2(QMainWindow):
     def stopThreadReadLine(self):
         try: 
             self.timer.stop()
+            self.timerXPS.stop()
             try:
                 self.logFileName.close()  
             except:
@@ -145,6 +150,7 @@ class MYP2(QMainWindow):
         SamplePeriod = 0.1
         self.countAcquisition = 0
         self.enAcquisition = 0
+        self.depolStateOld = self.depolState 
         while(self.t1State==1):
                 try:             
                     self.ExtStrLine = (str)(self.dut.rLineCom())
@@ -152,14 +158,9 @@ class MYP2(QMainWindow):
                         if self.ExtStrLine !="OK\r\n":
                             self.t1 = time.time()
                             self.tlog = datetime.now()
-                            try:
-                                self.measXPS()  
-                            except:
-                                None
                             self.enAcquisition = 0
                             self.extractExtStrLine(valStr = self.ExtStrLine)
                             self.countAcquisition = self.countAcquisition + SamplePeriod
-                            
 # puis, échantillonnage de 1 mn pendant 1 heure
 # puis échantillonnage de 10 mn pendant 24h
 # puis échantillonnage de 1h le reste du temps. 
@@ -181,19 +182,23 @@ class MYP2(QMainWindow):
                                         # puis, échantillonnage de 1 mn pendant 1 heure
                                             self.t2 = self.t1 + MN1                               
                                 if self.enAcquisition == 1:  
-                                                       
-                                    self.guiMeasTabToLogFile()
+                                    if self.depolState == self.depolStateOld:   #filtre sur tension à la commuttation du relai                   
+                                        self.guiMeasTabToLogFile()
+                                    else:
+                                        self.depolStateOld = self.depolState 
                                     self.enAcquisition = 0 
                         else:
+                            None
                             self.dut.flushCom() 
                 except:
+                    None
                     self.dut.flushCom()   
              
     def guiMeasTabToLogFile(self):
         try:
-            fileStr = str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
-                                                + str("{0:.1f}".format(self.guiMeas["VPS"]))+ ";" \
-                                                + str("{0:.1f}".format(self.guiMeas["IPS"]))+ ";" \
+            fileStr = str(self.idx) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
+                                                + str("{0:.3f}".format(self.guiMeas["VPS"]))+ ";" \
+                                                + str("{0:.3f}".format(self.guiMeas["IPS"]))+ ";" \
                                                 + str("{0:.1f}".format(self.guiMeas["V1"]))+ ";" \
                                                 + str("{0:.1f}".format(self.guiMeas["V2"]))+ ";" \
                                                 + str("{0:.1f}".format(self.guiMeas["V3"]))+ ";" \
@@ -234,7 +239,12 @@ class MYP2(QMainWindow):
         if self.countTimer == 2:
             self.saveJsonConf() 
             self.countTimer =  0       
-        
+    
+    def runtimerXPS(self):
+        try:
+            self.measXPS()
+        except:
+            None
             
     def appendChrono(self):
         try:
@@ -293,9 +303,11 @@ class MYP2(QMainWindow):
             NONE     
                
     def extractExtStrLine(self, valStr = ""): 
+        print(str(valStr))
         try:
             tabStrVal = valStr.split(';', 12)    
-            idx = 0     
+            idx = 0  
+            self.idx = float(tabStrVal[idx]) 
             self.guiMeas["V1"]=self.calV(x=float(tabStrVal[idx+1]))
             self.guiMeas["V2"]=self.calV(x=float(tabStrVal[idx+2]))
             self.guiMeas["V3"]=self.calV(x=float(tabStrVal[idx+3]))
@@ -308,6 +320,8 @@ class MYP2(QMainWindow):
             self.guiMeas["I4"]=self.calI(x=float(tabStrVal[idx+10]))
             self.guiMeas["I5"]=self.calI(x=float(tabStrVal[idx+11]))
             self.guiMeas["I6"]=self.calI(x=float(tabStrVal[idx+12]))
+            
+            
         except:
             NONE
     
@@ -371,7 +385,7 @@ class MYP2(QMainWindow):
         self.ExtractLogFileName = file[0]
         if not os.path.exists(self.ExtractLogFileName):
             self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-            self.strLine = "time;polarState;VPS;IPS;V1;V2;V3;V4;V5;V6;I1;I2;I3;I4;I5;I6\r"
+            self.strLine = "idx,time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
         
@@ -555,11 +569,13 @@ class MYP2(QMainWindow):
                 pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
                 self.btnConnect.setPalette(pal) 
                 self.timer.start() 
+                self.timerXPS.start()
                 self.startThreadReadLine()
         else:
             if self.t1State == 1:
                 try:
                     self.timer.stop() 
+                    self.timerXPS.stop()
                     self.stopThreadReadLine()
                 except:
                     self.t1State = 0
