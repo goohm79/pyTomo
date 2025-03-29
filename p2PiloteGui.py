@@ -115,6 +115,7 @@ class MYP2(QMainWindow):
         self.StatePS = self.powerSupply.getonOff()
         self.saveJsonConf()
         self.stopThreadReadLine()
+        self.shutdown()
     
         
     def startThreadReadLine(self):  
@@ -303,7 +304,7 @@ class MYP2(QMainWindow):
             NONE     
                
     def extractExtStrLine(self, valStr = ""): 
-        print(str(valStr))
+        #print(str(valStr))
         try:
             tabStrVal = valStr.split(';', 12)    
             idx = 0  
@@ -406,7 +407,7 @@ class MYP2(QMainWindow):
         
         
     def polDepol(self):   
-        self.tpol = time.time()   
+        self.tpol = time.time()  
         if self.depolState == 0: # polarisattion state
             self.btnPoldePol.setText("SET DEPOL")
             pal.setColor(QPalette.ButtonText, QColor(231, 140, 49))
@@ -939,12 +940,17 @@ class MYP2(QMainWindow):
             tab.append(0)
 
 if __name__ == "__main__":
+    
+    if not QtWidgets.QApplication.instance():
+        app = QtWidgets.QApplication(sys.argv)
+    else:
+        app = QtWidgets.QApplication.instance()
+    app.shutdown()
     app = QtWidgets.QApplication([])
-
-
     widget = MYP2()
     
     widget.resize(2000, 1000)
     widget.show()
 
     sys.exit(app.exec())
+    

@@ -161,8 +161,8 @@ class PL303GUI(QtWidgets.QWidget):
         self.vm = SDIGIT("Voltage [V]")
         self.im = SDIGIT("Current [A]")
         
-        self.v =PMLINE(delta =0.1)
-        self.i =PMLINE(delta =0.1)
+        self.v =PMLINE(delta =0.1,mini=0,maxi=30)
+        self.i =PMLINE(delta =0.1,mini=0,maxi=2)
         
         self.btnOnOff = QtWidgets.QPushButton("ON")
         self.btnOnOff.setDefault(True)
@@ -197,6 +197,12 @@ class PL303GUI(QtWidgets.QWidget):
     
        
 if __name__ == "__main__":
+    
+    if not QtWidgets.QApplication.instance():
+        app = QtWidgets.QApplication(sys.argv)
+    else:
+        app = QtWidgets.QApplication.instance()
+    app.shutdown()
     app = QtWidgets.QApplication([])
 
     widget = PL303GUI()    

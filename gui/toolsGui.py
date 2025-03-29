@@ -18,6 +18,8 @@ from PySide6.QtGui import QBrush, QPen, QColor, QPainter
 import os.path
 
 import threading
+from pyqtgraph.examples.FillBetweenItem import mx
+from audioop import max
 
 pal = QPalette()
 pal.setColor(QPalette.Base, QColor(60, 60, 60))
@@ -246,9 +248,11 @@ class SDIGIT(QtWidgets.QWidget):
         self.GroupBox.setLayout(mainLayout)
     
 class PMLINE(QtWidgets.QWidget):
-    def __init__(self, name = "", delta = 1.0):
+    def __init__(self, name = "", delta = 1.0, mini=-1000, maxi=1000):
         self.name = name
         self.delta = delta
+        self.maxi=maxi
+        self.mini=mini
         self.value = 0.0
         self.GroupBox = QtWidgets.QGroupBox(self.name)
         self.GroupBox.setGeometry(0,0,25,100)
@@ -303,7 +307,12 @@ class PMLINE(QtWidgets.QWidget):
         self.setVal(self.value)
         
     def setVal(self, val):
-        self.value = val
+        if val > self.maxi:
+            self.value = self.maxi
+        elif val < self.mini:
+            self.value = self.mini
+        else:
+            self.value = val
         self.inputbox.setText("{0:.3f}".format(self.value))
         
     def getVal(self):
