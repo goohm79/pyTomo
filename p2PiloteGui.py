@@ -170,7 +170,17 @@ class MYP2(QMainWindow):
                                     # au moment de la transition : échantillonnage de 0.1 s pendant 2 mn
                                     self.enAcquisition = 1
                                     self.t2 = self.t1
+                                    if self.depolState == self.depolStateOld:   #filtre sur tension à la commuttation du relai                   
+                                        if self.idx > self.idxFirst:
+                                            self.idxPol = self.idx - self.idxFirst 
+                                        else:
+                                            self.idxPol = 65534 - self.idxFirst +  self.idx
+                                    else:
+                                        self.idxFirst = self.idx
+                                        self.idxPol = 0
+                                        self.depolStateOld = self.depolState
                                 else:
+                                    self.idxPol  = self.idxPol +1
                                     if self.t1 >= self.t2 :
                                         self.enAcquisition = 1
                                         if self.t1 >= self.tpol + H24 :
@@ -182,12 +192,8 @@ class MYP2(QMainWindow):
                                         else :
                                         # puis, échantillonnage de 1 mn pendant 1 heure
                                             self.t2 = self.t1 + MN1                               
-                                if self.enAcquisition == 1:  
-                                    self.depolStateOld = self.depolState
-                                    if self.depolState == self.depolStateOld:   #filtre sur tension à la commuttation du relai                   
-                                        self.guiMeasTabToLogFile()
-                                    else:
-                                        self.depolStateOld = self.depolState 
+                                if self.enAcquisition == 1: # and self.idxPol != 2:  
+                                    self.guiMeasTabToLogFile()
                                     self.enAcquisition = 0 
                         else:
                             None
@@ -198,7 +204,7 @@ class MYP2(QMainWindow):
              
     def guiMeasTabToLogFile(self):
         try:
-            fileStr = str(self.idx) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
+            fileStr = str(self.idxPol) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
                                                 + str("{0:.3f}".format(self.guiMeas["VPS"]))+ ";" \
                                                 + str("{0:.3f}".format(self.guiMeas["IPS"]))+ ";" \
                                                 + str("{0:.1f}".format(self.guiMeas["V1"]))+ ";" \
@@ -414,6 +420,7 @@ class MYP2(QMainWindow):
     def polDepol(self):   
         self.timerXPS.stop()
         self.tpol = time.time()  
+        self.idxPol = 0
         if self.depolState == 0: # polarisattion state
             self.btnPoldePol.setText("SET DEPOL")
             pal.setColor(QPalette.ButtonText, QColor(231, 140, 49))
