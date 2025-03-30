@@ -341,22 +341,18 @@ class TOMO1S12V2I:
   def setPolP2Pilot(self):
     try :
         strVal = "AT+POLP2=1\r\n"
-        self.com.flushInput()
         self.com.flushOutput()
         a = strVal.encode('utf-8')
         self.com.write(data=a)
-        self.com.flushInput()
     except:
       None
 
   def resetPolP2Pilot(self):
     try :
         strVal = "AT+POLP2=0\r\n"
-        self.com.flushInput()
         self.com.flushOutput()
         a = strVal.encode('utf-8')
         self.com.write(data=a)
-        self.com.flushInput()
     except:
       None
 

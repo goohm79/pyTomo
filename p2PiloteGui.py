@@ -183,6 +183,7 @@ class MYP2(QMainWindow):
                                         # puis, échantillonnage de 1 mn pendant 1 heure
                                             self.t2 = self.t1 + MN1                               
                                 if self.enAcquisition == 1:  
+                                    self.depolStateOld = self.depolState
                                     if self.depolState == self.depolStateOld:   #filtre sur tension à la commuttation du relai                   
                                         self.guiMeasTabToLogFile()
                                     else:
@@ -378,6 +379,7 @@ class MYP2(QMainWindow):
         self.jsonConf.SetJsonParam(name="PL303_State", val=self.StatePS)      
     
     def selectLogFile(self):
+        self.timerXPS.stop()
         self.logDateTime = datetime.now()
         self.logFileName = "log_p2Pilote_" + "_date-" + str(self.logDateTime)
         file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
@@ -389,8 +391,10 @@ class MYP2(QMainWindow):
             self.strLine = "idx,time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
+        self.timerXPS.start()
         
     def startStopLog(self):
+        self.timerXPS.stop()
         self.tpol = time.time() 
         if self.startLogSate == 0: # start log et acuquiition
             self.btnStartStop.setText("STOP LOG")
@@ -404,32 +408,35 @@ class MYP2(QMainWindow):
             self.btnStartStop.setPalette(pal)
             self.startLogSate = 0
             #self.dut.stopP2Pilote()
+        self.timerXPS.start()
         
         
     def polDepol(self):   
+        self.timerXPS.stop()
         self.tpol = time.time()  
         if self.depolState == 0: # polarisattion state
             self.btnPoldePol.setText("SET DEPOL")
             pal.setColor(QPalette.ButtonText, QColor(231, 140, 49))
             self.btnPoldePol.setPalette(pal)  
-            self.powerSupply.SetonOff(state=1) 
+            self.powerSupply.SetonOff(state=1)  
             self.dut.setPolP2Pilot()
-            self.depolState = 1  
+            self.depolState = 1 
             self.lblStatePol.setText("PILOTE STATE: POLARISATION")
             pal.setColor(QPalette.WindowText, QColor(49, 140, 231)) 
             self.lblStatePol.setPalette(pal) 
         else: # polarisattion state
             self.btnPoldePol.setText("SET POL")
             pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
-            self.btnPoldePol.setPalette(pal)
+            self.btnPoldePol.setPalette(pal) 
             self.dut.resetPolP2Pilot()
-            self.powerSupply.displayVm(v=0) 
-            self.powerSupply.displayIm(i=0) 
             self.powerSupply.SetonOff(state=0) 
-            self.depolState = 0  
+            self.depolState = 0 
+            #self.powerSupply.displayVm(v=0) 
+            #self.powerSupply.displayIm(i=0) 
             self.lblStatePol.setText("PILOTE STATE: DéPOLARISATION")
             pal.setColor(QPalette.WindowText, QColor(231, 140, 49))
             self.lblStatePol.setPalette(pal) 
+        self.timerXPS.start()
               
         
     def setP2Prog(self):
