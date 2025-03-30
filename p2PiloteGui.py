@@ -179,19 +179,22 @@ class MYP2(QMainWindow):
                                         self.idxFirst = self.idx
                                         self.idxPol = 0
                                         self.depolStateOld = self.depolState
+                                    self.timeS = 0.1 * self.idxPol
                                 else:
-                                    self.idxPol  = self.idxPol +1
                                     if self.t1 >= self.t2 :
                                         self.enAcquisition = 1
                                         if self.t1 >= self.tpol + H24 :
                                         # puis échantillonnage de 1h le reste du temps. 
                                             self.t2 = self.t1 + H1
+                                            self.timeS = self.timeS + H1
                                         elif self.t1 >=  self.tpol + H1 :
                                         # puis échantillonnage de 10 mn pendant 24h
                                             self.t2 = self.t1 + MN10
+                                            self.timeS = self.timeS + MN10
                                         else :
                                         # puis, échantillonnage de 1 mn pendant 1 heure
-                                            self.t2 = self.t1 + MN1                               
+                                            self.t2 = self.t1 + MN1 
+                                            self.timeS = self.timeS + MN1                              
                                 if self.enAcquisition == 1: # and self.idxPol != 2:  
                                     self.guiMeasTabToLogFile()
                                     self.enAcquisition = 0 
@@ -204,7 +207,7 @@ class MYP2(QMainWindow):
              
     def guiMeasTabToLogFile(self):
         try:
-            fileStr = str(self.idxPol) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
+            fileStr = str(self.timeS) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
                                                 + str("{0:.3f}".format(self.guiMeas["VPS"]))+ ";" \
                                                 + str("{0:.3f}".format(self.guiMeas["IPS"]))+ ";" \
                                                 + str("{0:.1f}".format(self.guiMeas["V1"]))+ ";" \
@@ -394,7 +397,7 @@ class MYP2(QMainWindow):
         self.ExtractLogFileName = file[0]
         if not os.path.exists(self.ExtractLogFileName):
             self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-            self.strLine = "idx,time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
+            self.strLine = "timeSeconde,time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
         self.timerXPS.start()
