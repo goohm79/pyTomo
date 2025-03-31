@@ -151,7 +151,7 @@ class MYP2(QMainWindow):
         SamplePeriod = 0.1
         self.countAcquisition = 0
         self.enAcquisition = 0
-        self.depolStateOld = self.depolState 
+        self.depolStateOld = self.depolState + 1
         while(self.t1State==1):
                 try:             
                     self.ExtStrLine = (str)(self.dut.rLineCom())
@@ -484,8 +484,7 @@ class MYP2(QMainWindow):
                 # création de thread
                 self.t1 = threading.Thread(target=self.printSourceTaskThreadReadLine)
                 self.t1State=1
-                self.t1.start()
-                
+                self.t1.start()            
             except:
                 self.t1State=0
     
