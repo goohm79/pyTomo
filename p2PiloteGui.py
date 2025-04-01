@@ -6,11 +6,11 @@ from datetime import datetime
 
 from ate.tomo import TOMO1S12V2I
 
-from gui.toolsGui import PARAMGUI, SDIGIT, PMLINE, Worker
+from gui.toolsGui import PARAMGUI, SDIGIT
 from gui.p303Gui import PL303GUI
 
 from pickle import NONE
-from PySide6.QtCore import SIGNAL, QObject, QTimer
+from PySide6.QtCore import SIGNAL, QTimer
 from PySide6 import  QtWidgets, QtGui # -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QWidget, QMainWindow
@@ -106,9 +106,7 @@ class MYP2(QMainWindow):
         self.timerXPS.timeout.connect(self.runtimerXPS)
         
         self.initPiloteGui()
-        
-
-        
+      
     def closeEvent(self, event):        
         self.Ilim = self.powerSupply.getI()
         self.Vlim = self.powerSupply.getV()
@@ -116,7 +114,6 @@ class MYP2(QMainWindow):
         self.saveJsonConf()
         self.stopThreadReadLine()
         self.shutdown()
-    
         
     def startThreadReadLine(self):  
         if self.initState == 1:
@@ -128,7 +125,7 @@ class MYP2(QMainWindow):
                 
             except:
                 self.t1State=0
-        
+                  
     def stopThreadReadLine(self):
         try: 
             self.timer.stop()
@@ -162,9 +159,9 @@ class MYP2(QMainWindow):
                             self.enAcquisition = 0
                             self.extractExtStrLine(valStr = self.ExtStrLine)
                             self.countAcquisition = self.countAcquisition + SamplePeriod
-# puis, échantillonnage de 1 mn pendant 1 heure
-# puis échantillonnage de 10 mn pendant 24h
-# puis échantillonnage de 1h le reste du temps. 
+                                        # puis, échantillonnage de 1 mn pendant 1 heure
+                                        # puis échantillonnage de 10 mn pendant 24h
+                                        # puis échantillonnage de 1h le reste du temps. 
                             if self.startLogSate == 1 :
                                 if self.t1 < (self.tpol + MN2):
                                     # au moment de la transition : échantillonnage de 0.1 s pendant 2 mn
@@ -180,7 +177,7 @@ class MYP2(QMainWindow):
                                         self.idxPol = 0
                                         self.depolStateOld = self.depolState
                                     self.timeS = 0.1 * self.idxPol
-                                else:
+                                else:						        
                                     if self.t1 >= self.t2 :
                                         self.enAcquisition = 1
                                         if self.t1 >= self.tpol + H24 :
@@ -207,7 +204,7 @@ class MYP2(QMainWindow):
              
     def guiMeasTabToLogFile(self):
         try:
-            fileStr = str(self.timeS) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
+            fileStr = str("{0:.1f}".format(self.timeS)) + ";" +  str(self.tlog)+ ";" + str(self.depolState)+ ";"  \
                                                 + str("{0:.3f}".format(self.guiMeas["VPS"]))+ ";" \
                                                 + str("{0:.3f}".format(self.guiMeas["IPS"]))+ ";" \
                                                 + str("{0:.1f}".format(self.guiMeas["V1"]))+ ";" \
@@ -234,9 +231,7 @@ class MYP2(QMainWindow):
     def measXPS(self): 
         self.guiMeas["IPS"] = self.powerSupply.measI()
         self.guiMeas["VPS"] = self.powerSupply.measV() 
-
-     
-             
+            
     def runtimerPlotrefresh(self):
         self.appendChrono() 
         self.updateLCD()              
@@ -247,7 +242,7 @@ class MYP2(QMainWindow):
             self.powerSupply.displayVm(v=0) 
             self.powerSupply.displayIm(i=0) 
         self.countTimer = self.countTimer +1
-        if self.countTimer == 2:
+        if self.countTimer == 4:
             self.saveJsonConf() 
             self.countTimer =  0       
     
@@ -388,7 +383,6 @@ class MYP2(QMainWindow):
         self.jsonConf.SetJsonParam(name="PL303_State", val=self.StatePS)      
     
     def selectLogFile(self):
-        self.timerXPS.stop()
         self.logDateTime = datetime.now()
         self.logFileName = "log_p2Pilote_" + "_date-" + str(self.logDateTime)
         file  = QtWidgets.QFileDialog.getSaveFileName(None, "Save a file csv", self.logFileName + ".csv",             "*.csv")
@@ -400,28 +394,21 @@ class MYP2(QMainWindow):
             self.strLine = "timeSeconde,time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
-        self.timerXPS.start()
         
-    def startStopLog(self):
-        self.timerXPS.stop()
+    def startStopLog(self):		
         self.tpol = time.time() 
         if self.startLogSate == 0: # start log et acuquiition
             self.btnStartStop.setText("STOP LOG")
             pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
             self.btnStartStop.setPalette(pal)            
-            self.startLogSate = 1
-            
+            self.startLogSate = 1         
         else: # stop
             self.btnStartStop.setText("START LOG")
             pal.setColor(QPalette.ButtonText, QColor(0, 255, 0))
             self.btnStartStop.setPalette(pal)
             self.startLogSate = 0
-            #self.dut.stopP2Pilote()
-        self.timerXPS.start()
-        
-        
-    def polDepol(self):   
-        self.timerXPS.stop()
+      
+    def polDepol(self): 
         self.tpol = time.time()  
         self.idxPol = 0
         if self.depolState == 0: # polarisattion state
@@ -441,12 +428,9 @@ class MYP2(QMainWindow):
             self.dut.resetPolP2Pilot()
             self.powerSupply.SetonOff(state=0) 
             self.depolState = 0 
-            #self.powerSupply.displayVm(v=0) 
-            #self.powerSupply.displayIm(i=0) 
             self.lblStatePol.setText("PILOTE STATE: DéPOLARISATION")
             pal.setColor(QPalette.WindowText, QColor(231, 140, 49))
             self.lblStatePol.setPalette(pal) 
-        self.timerXPS.start()
               
         
     def setP2Prog(self):
@@ -468,9 +452,7 @@ class MYP2(QMainWindow):
         self.initState = 0 
         self.t1State = 0
         self.initDut()  
-        
-            
-       
+      
     def setCal(self):
         self.dut.stopP2Pilote()
         self.textEditTerminal.append("Set calibration")
@@ -576,7 +558,7 @@ class MYP2(QMainWindow):
                 pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
                 self.ledPL303.setPalette(pal)
             else:
-                self.initState = 0
+                self.initState = 1
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
                 self.ledPL303.setPalette(pal)
             
@@ -686,10 +668,7 @@ class MYP2(QMainWindow):
         mainLayout.setRowStretch(2,2)
         mainLayout.setColumnStretch(0, 1)
         self.controlGroupBox.setLayout(mainLayout)
-    
-   
-        
-       
+      
     def createVoltMeterGroupBox(self):
         self.voltMeterGroupBox = QtWidgets.QGroupBox("[mV]")
         self.voltMeterGroupBox.setGeometry(0,0,100,50)
@@ -953,6 +932,7 @@ class MYP2(QMainWindow):
         
     def clearTabmList (self, tab = []):
         for i in range(self.plotRange):
+            i = i
             tab.append(0)
 
 if __name__ == "__main__":
