@@ -608,9 +608,12 @@ class MYP2(QMainWindow):
         self.voltMeterGroupBox.setLayout(mainLayout)
             
 if __name__ == "__main__":
+    if not QtWidgets.QApplication.instance():
+        app = QtWidgets.QApplication(sys.argv)
+    else:
+        app = QtWidgets.QApplication.instance()
+    app.shutdown()
     app = QtWidgets.QApplication([])
-
-
     widget = MYP2()
     
     widget.resize(2000, 1000)

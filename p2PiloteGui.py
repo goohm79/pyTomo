@@ -200,7 +200,7 @@ class MYP2(QMainWindow):
                             self.dut.flushCom() 
                 except:
                     None
-                    self.dut.flushCom()   
+                    #self.dut.flushCom()   
              
     def guiMeasTabToLogFile(self):
         try:
@@ -491,7 +491,8 @@ class MYP2(QMainWindow):
         self.loadJsonConf()
         self.initState = 0  
         self.t1State = 0 
-        self.initDut()
+        #self.initDut()
+        self.initDuttest()
         self.countAcquisition = 0
         self.tpol = time.time() 
         if self.startLogSate == 1: # polarisattion state
@@ -524,7 +525,26 @@ class MYP2(QMainWindow):
         self.powerSupply.SetonOff(state= self.StatePS)       
         
         self.initState = 1
-              
+        
+    
+    def initDuttest(self): 
+        pal = QPalette()
+        pal.setColor(QPalette.Base, QColor(60, 60, 60))
+        pal.setColor(QPalette.WindowText, QtGui.QColor(103, 113, 121))  
+        pal.setColor(QPalette.Button, QColor(60, 60, 60))
+        pal.setColor(QPalette.Text, QColor(255, 255, 255))
+        self.ledTomo.setPalette(pal) 
+        self.dut = TOMO1S12V2I(comPort="/dev/TOMO_COM")
+        self.initState = 1
+        self.t1State = 1
+        self.btnConnect.setText("Disconnect")
+        pal.setColor(QPalette.ButtonText, QColor(255, 0, 0))
+        self.btnConnect.setPalette(pal) 
+        self.timer.start() 
+        self.timerXPS.start()
+        self.startThreadReadLine()
+
+            
     def initDut(self):   
         pal = QPalette()
         pal.setColor(QPalette.Base, QColor(60, 60, 60))
@@ -548,12 +568,12 @@ class MYP2(QMainWindow):
                     pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
                     self.ledTomo.setPalette(pal) 
                 except:
-                    None                   
+                    
+                    None                  
             except:
                 self.initState = 0
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
                 self.ledTomo.setPalette(pal) 
-             
             if self.powerSupply.setCom() == 1:
                 pal.setColor(QPalette.WindowText, QColor(0, 255, 0))
                 self.ledPL303.setPalette(pal)
@@ -561,7 +581,8 @@ class MYP2(QMainWindow):
                 self.initState = 1
                 pal.setColor(QPalette.WindowText, QColor(255, 0, 0))
                 self.ledPL303.setPalette(pal)
-            
+            self.P2State  = 1
+            self.initState =1
             if self.initState == 1:  
                 self.dut.startP2Pilote()    
                 self.btnConnect.setText("Disconnect")

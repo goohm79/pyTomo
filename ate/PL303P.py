@@ -4,6 +4,7 @@ from time import sleep
 
 class PL303:
     def __init__(self, comPort = "/dev/PL303_COM"):
+        self.test = 1
         print('Class PL303')
         self.OutputState = 0
         self.comPort = comPort
@@ -19,7 +20,7 @@ class PL303:
             
         except:
             print("comPort: " + self.comPort + " could not connected to PowerSupply PL303-P")     
-            return 0
+            return 1
     # Press the green button in the gutter to run the script.
     def Output(self, val=None):
         if val == None:
@@ -58,10 +59,18 @@ class PL303:
     def Meas(self, fct=None):
         if fct == 'V' or fct == 'v':
             ret = self.Get('V1O?')
-            return float(ret)
+            if self.test == 0: 
+                return float(ret)
+            else:
+                sleep(0.1)
+                return 99.9
         elif fct == 'A' or fct == 'a' or fct == 'I' or fct == 'i':
             ret = self.Get('I1O?')
-            return float(ret)
+            if self.test == 0: 
+                return float(ret)
+            else:
+                sleep(0.1)
+                return 'A'
 
     def Write(self, val=None):
         try:

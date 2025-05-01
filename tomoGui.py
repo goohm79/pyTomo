@@ -6,7 +6,7 @@ from datetime import timedelta
 from PySide6.QtCore import SIGNAL
 from PySide6 import QtCore, QtWidgets, QtGui # -*- coding: utf-8 -*-
 from PySide6.QtGui import QPalette, QColor, QPixmap
-from tomo import TOMO1S12V2I
+from ate.tomo import TOMO1S12V2I
 from pickle import NONE
 
 import os.path
@@ -1054,6 +1054,11 @@ class MyWidget(QtWidgets.QWidget):
             
         
 if __name__ == "__main__":
+    if not QtWidgets.QApplication.instance():
+        app = QtWidgets.QApplication(sys.argv)
+    else:
+        app = QtWidgets.QApplication.instance()
+    app.shutdown()
     app = QtWidgets.QApplication([])
 
     widget = MyWidget()

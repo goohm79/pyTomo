@@ -12,7 +12,7 @@ import time
 
 class TOMO1S12V2I:
   def __init__(self, comPort="/dev/TOMO_COM"):
-
+    self.test = 1
     self.Meas = {}
     self.ZA = 0
     self.IChannel= 0
@@ -87,8 +87,12 @@ class TOMO1S12V2I:
 
 
   def rLineCom(self):
-      ret = self.com.readline()
-      return ret.decode()
+    if self.test ==1 :
+        time.sleep(0.1)
+        return "1;1000;-2000;1.1;1.1;1.1;1.1;1.1;1.1;1.1;1.1;1.1;2500\r\n"
+    else:
+        ret = self.com.readline()
+        return ret.decode()
   
   def rCom(self):    
     ret = self.com.readline()
@@ -303,7 +307,7 @@ class TOMO1S12V2I:
     
   def getP2(self):
     strVal = "AT+P2=?\r\n"
-    ret = self.wrCom(data=strVal)
+    ret = self.wrCom(data=strVal)  
     if ret != 999999999:
         return int(ret)
     
