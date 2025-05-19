@@ -4,7 +4,7 @@ from time import sleep
 
 class PL303:
     def __init__(self, comPort = "/dev/PL303_COM"):
-        self.test = 1
+        self.test = 0
         print('Class PL303')
         self.OutputState = 0
         self.comPort = comPort
@@ -62,15 +62,15 @@ class PL303:
             if self.test == 0: 
                 return float(ret)
             else:
-                sleep(0.1)
-                return 99.9
+                sleep(0.05)
+                return 99
         elif fct == 'A' or fct == 'a' or fct == 'I' or fct == 'i':
             ret = self.Get('I1O?')
             if self.test == 0: 
                 return float(ret)
             else:
-                sleep(0.1)
-                return 'A'
+                sleep(0.05)
+                return 1
 
     def Write(self, val=None):
         try:

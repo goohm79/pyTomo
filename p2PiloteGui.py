@@ -30,7 +30,7 @@ palRed.setColor(QPalette.Button, QColor(60, 60, 60))
 palRed.setColor(QPalette.Text, QColor(255, 0, 0))
 palRed.setColor(QPalette.WindowText, QColor(255, 0, 0))
 
-
+NPLOTSIZE = 1200
        
 class MYP2(QMainWindow):
     def __init__(self):
@@ -62,7 +62,9 @@ class MYP2(QMainWindow):
         self.lbllogo.setPixmap(pixmap)
         
         self.initState = 0  
-        self.t1State = 0    
+        self.t1State = 0  
+        
+        self.enRefreshGraph = 0  
 
         oneLayout= QtWidgets.QGridLayout()
         oneGroupBox = QtWidgets.QGroupBox("")
@@ -98,12 +100,17 @@ class MYP2(QMainWindow):
         
         self.timer = QTimer()
         self.timer.setInterval(500)
-        self.timer.timeout.connect(self.runtimerPlotrefresh)
+        self.timer.timeout.connect(self.runtimerLCDrefresh)
         self.countTimer = 0
         
         self.timerXPS = QTimer()
         self.timerXPS.setInterval(100)
         self.timerXPS.timeout.connect(self.runtimerXPS)
+        
+        self.timerPLOT = QTimer()
+        self.timerPLOT.setInterval(2000)
+        self.timerPLOT.timeout.connect(self.runtimerPlotrefresh)
+        self.cc = 0
         
         self.initPiloteGui()
       
@@ -130,6 +137,7 @@ class MYP2(QMainWindow):
         try: 
             self.timer.stop()
             self.timerXPS.stop()
+            self.timerPLOT.stop()
             try:
                 self.logFileName.close()  
             except:
@@ -148,6 +156,7 @@ class MYP2(QMainWindow):
         SamplePeriod = 0.1
         self.countAcquisition = 0
         self.enAcquisition = 0
+        
         self.depolStateOld = self.depolState + 1
         while(self.t1State==1):
                 try:             
@@ -159,6 +168,8 @@ class MYP2(QMainWindow):
                             self.enAcquisition = 0
                             self.extractExtStrLine(valStr = self.ExtStrLine)
                             self.countAcquisition = self.countAcquisition + SamplePeriod
+                            self.appendTabChrono()
+                            
                                         # puis, échantillonnage de 1 mn pendant 1 heure
                                         # puis échantillonnage de 10 mn pendant 24h
                                         # puis échantillonnage de 1h le reste du temps. 
@@ -177,6 +188,7 @@ class MYP2(QMainWindow):
                                         self.idxPol = 0
                                         self.depolStateOld = self.depolState
                                     self.timeS = 0.1 * self.idxPol
+                                    self.enRefreshGraph = 1
                                 else:						        
                                     if self.t1 >= self.t2 :
                                         self.enAcquisition = 1
@@ -191,13 +203,18 @@ class MYP2(QMainWindow):
                                         else :
                                         # puis, échantillonnage de 1 mn pendant 1 heure
                                             self.t2 = self.t1 + MN1 
-                                            self.timeS = self.timeS + MN1                              
-                                if self.enAcquisition == 1: # and self.idxPol != 2:  
+                                            self.timeS = self.timeS + MN1   
+                          
+                                if self.enAcquisition == 1: # and self.idxPol != 2: 
                                     self.guiMeasTabToLogFile()
                                     self.enAcquisition = 0 
+                            else:
+                                self.ExtStrLine = None
                         else:
                             None
                             self.dut.flushCom() 
+                    else:
+                        self.ExtStrLine = None
                 except:
                     None
                     #self.dut.flushCom()   
@@ -221,7 +238,7 @@ class MYP2(QMainWindow):
                                                 + str("{0:.1f}".format(self.guiMeas["I6"]))+ "\r"                                  
             self.ExtractLogFile = open(self.logFileName, "a")
             self.ExtractLogFile.writelines(fileStr)
-            self.ExtractLogFile.close()                                 
+            self.ExtractLogFile.close()                                
         except:
             try:
                 self.ExtractLogFile.close() 
@@ -232,8 +249,7 @@ class MYP2(QMainWindow):
         self.guiMeas["IPS"] = self.powerSupply.measI()
         self.guiMeas["VPS"] = self.powerSupply.measV() 
             
-    def runtimerPlotrefresh(self):
-        self.appendChrono() 
+    def runtimerLCDrefresh(self):
         self.updateLCD()              
         if self.powerSupply.getonOff() == 1:
             self.powerSupply.displayVm(v=self.guiMeas["VPS"]) 
@@ -251,60 +267,91 @@ class MYP2(QMainWindow):
             self.measXPS()
         except:
             None
+    
+    def runtimerPlotrefresh(self):
+        if self.enRefreshGraph == 1:
+            self.appendChrono() 
+            self.enRefreshGraph = 0
             
+    def clearChrono(self):
+        try:
+            self.linemV1.clear()
+            self.linemV2.clear()
+            self.linemV3.clear()
+            self.linemV4.clear()
+            self.linemV5.clear()
+            self.linemV6.clear()
+            
+            self.linemI1.clear()
+            self.linemI2.clear()
+            self.linemI3.clear()
+            self.linemI4.clear()
+            self.linemI5.clear()
+            self.linemI6.clear()
+        except:
+            None
     def appendChrono(self):
+        try:
+                #self.appendTabChrono()
+            self.clearChrono()
+                
+            self.linemV1.setData(x=self.time, y=self.tabmV1)
+            self.linemV2.setData(x=self.time, y=self.tabmV2)
+            self.linemV3.setData(x=self.time, y=self.tabmV3)
+            self.linemV4.setData(x=self.time, y=self.tabmV4)
+            self.linemV5.setData(x=self.time, y=self.tabmV5)
+            self.linemV6.setData(x=self.time, y=self.tabmV6)     
+    
+            self.linemI1.setData(x=self.time, y=self.tabmI1)
+            self.linemI2.setData(x=self.time, y=self.tabmI2)
+            self.linemI3.setData(x=self.time, y=self.tabmI3)
+            self.linemI4.setData(x=self.time, y=self.tabmI4)
+            self.linemI5.setData(x=self.time, y=self.tabmI5)
+            self.linemI6.setData(x=self.time, y=self.tabmI6)
+        except:
+            self.clearChrono()
+
+                              
+    def appendTabChrono(self):
         try:
             self.time = self.time[1:]
             self.time.append(self.countAcquisition)
             
             self.tabmV1 = self.tabmV1[1:]
             self.tabmV1.append(self.guiMeas["V1"])
-            self.linemV1.setData(x=self.time, y=self.tabmV1)
             
             self.tabmV2 = self.tabmV2[1:]
             self.tabmV2.append(self.guiMeas["V2"])
-            self.linemV2.setData(self.time, self.tabmV2)
             
             self.tabmV3 = self.tabmV3[1:]
             self.tabmV3.append(self.guiMeas["V3"])
-            self.linemV3.setData(self.time, self.tabmV3)
             
             self.tabmV4 = self.tabmV4[1:]
             self.tabmV4.append(self.guiMeas["V4"])
-            self.linemV4.setData(self.time, self.tabmV4)
             
             self.tabmV5 = self.tabmV5[1:]
             self.tabmV5.append(self.guiMeas["V5"])
-            self.linemV5.setData(self.time, self.tabmV5)
             
             self.tabmV6 = self.tabmV6[1:]
             self.tabmV6.append(self.guiMeas["V6"])
-            self.linemV6.setData(self.time, self.tabmV6)
-            
-            
+
             self.tabmI1 = self.tabmI1[1:]
             self.tabmI1.append(self.guiMeas["I1"])
-            self.linemI1.setData(self.time, self.tabmI1)
             
             self.tabmI2 = self.tabmI2[1:]
             self.tabmI2.append(self.guiMeas["I2"])
-            self.linemI2.setData(self.time, self.tabmI2)
             
             self.tabmI3 = self.tabmI3[1:]
             self.tabmI3.append(self.guiMeas["I3"])
-            self.linemI3.setData(self.time, self.tabmI3)
             
             self.tabmI4 = self.tabmI4[1:]
             self.tabmI4.append(self.guiMeas["I4"])
-            self.linemI4.setData(self.time, self.tabmI4)
             
             self.tabmI5 = self.tabmI5[1:]
             self.tabmI5.append(self.guiMeas["I5"])
-            self.linemI5.setData(self.time, self.tabmI5)
             
             self.tabmI6 = self.tabmI6[1:]
             self.tabmI6.append(self.guiMeas["I6"])
-            self.linemI6.setData(self.time, self.tabmI6)
         except:
             NONE     
                
@@ -326,7 +373,8 @@ class MYP2(QMainWindow):
             self.guiMeas["I4"]=self.calI(x=float(tabStrVal[idx+10]))
             self.guiMeas["I5"]=self.calI(x=float(tabStrVal[idx+11]))
             self.guiMeas["I6"]=self.calI(x=float(tabStrVal[idx+12]))
-            
+            del tabStrVal
+            del idx
             
         except:
             NONE
@@ -391,7 +439,7 @@ class MYP2(QMainWindow):
         self.ExtractLogFileName = file[0]
         if not os.path.exists(self.ExtractLogFileName):
             self.ExtractLogFile = open(self.ExtractLogFileName, "w")
-            self.strLine = "timeSeconde,time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
+            self.strLine = "timeSeconde;time;polarState;VPS(V);IPS(A);V1(mV);V2(mV);V3(mV);V4(mV);V5(mV);V6(mV);I1(mA);I2(mA);I3(mA);I4(mA);I5(mA);I6(mA)\r"
             self.ExtractLogFile.writelines(self.strLine)
             self.ExtractLogFile.close()
         
@@ -491,8 +539,8 @@ class MYP2(QMainWindow):
         self.loadJsonConf()
         self.initState = 0  
         self.t1State = 0 
-        #self.initDut()
-        self.initDuttest()
+        self.initDut()
+        #self.initDuttest()
         self.countAcquisition = 0
         self.tpol = time.time() 
         if self.startLogSate == 1: # polarisattion state
@@ -542,6 +590,7 @@ class MYP2(QMainWindow):
         self.btnConnect.setPalette(pal) 
         self.timer.start() 
         self.timerXPS.start()
+        self.timerPLOT.start()
         self.startThreadReadLine()
 
             
@@ -590,12 +639,14 @@ class MYP2(QMainWindow):
                 self.btnConnect.setPalette(pal) 
                 self.timer.start() 
                 self.timerXPS.start()
+                self.timerPLOT.start()
                 self.startThreadReadLine()
         else:
             if self.t1State == 1:
                 try:
                     self.timer.stop() 
                     self.timerXPS.stop()
+                    self.timerPLOT.stop()
                     self.stopThreadReadLine()
                 except:
                     self.t1State = 0
@@ -774,7 +825,7 @@ class MYP2(QMainWindow):
         self.btnPoldePol.setDefault(True)
         mainLayout.addWidget(self.btnPoldePol,0,4)
       
-        self.plotRange = 500
+        self.plotRange = NPLOTSIZE
         self.plotmV = pg.PlotWidget()
         self.plotmV.setBackground((53, 53, 53))
         
