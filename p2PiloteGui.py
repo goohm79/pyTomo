@@ -97,6 +97,8 @@ class MYP2(QMainWindow):
         self.connect(self.btnLogFile, SIGNAL("clicked()"),self.selectLogFile)
         self.connect(self.btnStartStop, SIGNAL("clicked()"),self.startStopLog)  
         self.connect(self.btnPoldePol, SIGNAL("clicked()"),self.polDepol)
+        self.connect(self.btnPlotRefresh, SIGNAL("clicked()"),self.clickPlotRefresh)
+        
         
         self.timer = QTimer()
         self.timer.setInterval(500)
@@ -267,7 +269,11 @@ class MYP2(QMainWindow):
             self.measXPS()
         except:
             None
-    
+            
+    def clickPlotRefresh(self):
+        if self.enRefreshGraph == 0:
+            self.enRefreshGraph =1
+        
     def runtimerPlotrefresh(self):
         if self.enRefreshGraph == 1:
             self.appendChrono() 
@@ -807,6 +813,12 @@ class MYP2(QMainWindow):
         self.btnLogFile.setDefault(True)
         mainLayout.addWidget(self.btnLogFile,0,0)
         
+        self.btnPlotRefresh = QtWidgets.QPushButton("Refresh Plot")
+        self.btnPlotRefresh.setPalette(pal)
+        self.btnPlotRefresh.setDefault(True)
+        mainLayout.addWidget(self.btnPlotRefresh,0,2)
+        self.btnPlotRefresh.setPalette(pal)
+        
         self.btnStartStop = QtWidgets.QPushButton("START LOG")
         self.btnStartStop.setPalette(pal)
         self.btnStartStop.setDefault(True)
@@ -998,7 +1010,7 @@ class MYP2(QMainWindow):
         mainLayout.addWidget(self.plotmA,2,0,1,5)
         self.linemI6.clear()
        
-        mainLayout.setRowStretch(0,2)
+        mainLayout.setRowStretch(0,4)
         mainLayout.setColumnStretch(3, 3)
         self.P2PiloteGroupBox.setLayout(mainLayout)      
         
