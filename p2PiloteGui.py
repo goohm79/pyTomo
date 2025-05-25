@@ -98,8 +98,8 @@ class MYP2(QMainWindow):
         self.connect(self.btnStartStop, SIGNAL("clicked()"),self.startStopLog)  
         self.connect(self.btnPoldePol, SIGNAL("clicked()"),self.polDepol)
         self.connect(self.btnPlotRefresh, SIGNAL("clicked()"),self.clickPlotRefresh)
-        
-        
+        self.connect(self.btnInitFsLog, SIGNAL("clicked()"),self.clickInitFsLog)
+
         self.timer = QTimer()
         self.timer.setInterval(500)
         self.timer.timeout.connect(self.runtimerLCDrefresh)
@@ -270,6 +270,9 @@ class MYP2(QMainWindow):
         except:
             None
             
+    def clickInitFsLog(self):
+        self.tpol = time.time()  
+        
     def clickPlotRefresh(self):
         if self.enRefreshGraph == 0:
             self.enRefreshGraph =1
@@ -813,10 +816,16 @@ class MYP2(QMainWindow):
         self.btnLogFile.setDefault(True)
         mainLayout.addWidget(self.btnLogFile,0,0)
         
+        self.btnInitFsLog = QtWidgets.QPushButton("InitFsLog")
+        self.btnInitFsLog.setPalette(pal)
+        self.btnInitFsLog.setDefault(True)
+        mainLayout.addWidget(self.btnInitFsLog,0,2)
+        self.btnInitFsLog.setPalette(pal)
+        
         self.btnPlotRefresh = QtWidgets.QPushButton("Refresh Plot")
         self.btnPlotRefresh.setPalette(pal)
         self.btnPlotRefresh.setDefault(True)
-        mainLayout.addWidget(self.btnPlotRefresh,0,2)
+        mainLayout.addWidget(self.btnPlotRefresh,0,3)
         self.btnPlotRefresh.setPalette(pal)
         
         self.btnStartStop = QtWidgets.QPushButton("START LOG")
@@ -829,13 +838,13 @@ class MYP2(QMainWindow):
         self.lblStatePol= QtWidgets.QLabel("PILOTE STATE: DéPOLARISATION")
         pal.setColor(QPalette.WindowText, QColor(231, 140, 49))
         self.lblStatePol.setPalette(pal)
-        mainLayout.addWidget(self.lblStatePol,0,3)
+        mainLayout.addWidget(self.lblStatePol,0,4)
         
         self.btnPoldePol = QtWidgets.QPushButton("SET POL")
         pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
         self.btnPoldePol.setPalette(pal)
         self.btnPoldePol.setDefault(True)
-        mainLayout.addWidget(self.btnPoldePol,0,4)
+        mainLayout.addWidget(self.btnPoldePol,0,5)
       
         self.plotRange = NPLOTSIZE
         self.plotmV = pg.PlotWidget()
@@ -1006,12 +1015,12 @@ class MYP2(QMainWindow):
         )        
         
       
-        mainLayout.addWidget(self.plotmV,1,0,1,5)
-        mainLayout.addWidget(self.plotmA,2,0,1,5)
+        mainLayout.addWidget(self.plotmV,1,0,1,6)
+        mainLayout.addWidget(self.plotmA,2,0,1,6)
         self.linemI6.clear()
        
-        mainLayout.setRowStretch(0,4)
-        mainLayout.setColumnStretch(3, 3)
+        mainLayout.setRowStretch(0,5)
+        mainLayout.setColumnStretch(4, 4)
         self.P2PiloteGroupBox.setLayout(mainLayout)      
         
     def clearTabmList (self, tab = []):
