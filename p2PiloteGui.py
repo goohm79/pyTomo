@@ -5,6 +5,7 @@ import threading
 from datetime import datetime
 
 from ate.tomo import TOMO1S12V2I
+from p2PiloteGraphGui import MYPLOT
 
 from gui.toolsGui import PARAMGUI, SDIGIT
 from gui.p303Gui import PL303GUI
@@ -99,6 +100,8 @@ class MYP2(QMainWindow):
         self.connect(self.btnPoldePol, SIGNAL("clicked()"),self.polDepol)
         self.connect(self.btnPlotRefresh, SIGNAL("clicked()"),self.clickPlotRefresh)
         self.connect(self.btnInitFsLog, SIGNAL("clicked()"),self.clickInitFsLog)
+        self.connect(self.btnPlotAPI, SIGNAL("clicked()"),self.clickbtnPlotAPI)
+        
 
         self.timer = QTimer()
         self.timer.setInterval(500)
@@ -134,6 +137,11 @@ class MYP2(QMainWindow):
                 
             except:
                 self.t1State=0
+                
+    def clickbtnPlotAPI(self):
+        self.new_window = MYPLOT()
+        # Affiche la nouvelle fenêtre
+        self.new_window.show()
                   
     def stopThreadReadLine(self):
         try: 
@@ -822,11 +830,17 @@ class MYP2(QMainWindow):
         mainLayout.addWidget(self.btnInitFsLog,0,2)
         self.btnInitFsLog.setPalette(pal)
         
-        self.btnPlotRefresh = QtWidgets.QPushButton("Refresh Plot")
+        self.btnPlotRefresh = QtWidgets.QPushButton("Refresh")
         self.btnPlotRefresh.setPalette(pal)
         self.btnPlotRefresh.setDefault(True)
         mainLayout.addWidget(self.btnPlotRefresh,0,3)
         self.btnPlotRefresh.setPalette(pal)
+        
+        self.btnPlotAPI = QtWidgets.QPushButton("Plot")
+        self.btnPlotAPI.setPalette(pal)
+        self.btnPlotAPI.setDefault(True)
+        mainLayout.addWidget(self.btnPlotAPI,0,4)
+        self.btnPlotAPI.setPalette(pal)
         
         self.btnStartStop = QtWidgets.QPushButton("START LOG")
         self.btnStartStop.setPalette(pal)
@@ -838,13 +852,13 @@ class MYP2(QMainWindow):
         self.lblStatePol= QtWidgets.QLabel("PILOTE STATE: DéPOLARISATION")
         pal.setColor(QPalette.WindowText, QColor(231, 140, 49))
         self.lblStatePol.setPalette(pal)
-        mainLayout.addWidget(self.lblStatePol,0,4)
+        mainLayout.addWidget(self.lblStatePol,0,5)
         
         self.btnPoldePol = QtWidgets.QPushButton("SET POL")
         pal.setColor(QPalette.ButtonText, QColor(49, 140, 231))
         self.btnPoldePol.setPalette(pal)
         self.btnPoldePol.setDefault(True)
-        mainLayout.addWidget(self.btnPoldePol,0,5)
+        mainLayout.addWidget(self.btnPoldePol,0,6)
       
         self.plotRange = NPLOTSIZE
         self.plotmV = pg.PlotWidget()
@@ -1015,12 +1029,12 @@ class MYP2(QMainWindow):
         )        
         
       
-        mainLayout.addWidget(self.plotmV,1,0,1,6)
-        mainLayout.addWidget(self.plotmA,2,0,1,6)
+        mainLayout.addWidget(self.plotmV,1,0,1,7)
+        mainLayout.addWidget(self.plotmA,2,0,1,7)
         self.linemI6.clear()
        
         mainLayout.setRowStretch(0,5)
-        mainLayout.setColumnStretch(4, 4)
+        mainLayout.setColumnStretch(5, 5)
         self.P2PiloteGroupBox.setLayout(mainLayout)      
         
     def clearTabmList (self, tab = []):
